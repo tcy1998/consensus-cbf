@@ -49,24 +49,15 @@ def PI_controller(virtual_target, true_position, error, cum_error):
     return u_true
 
 def g_id_leader(x):         # the trajectory of the leader
-    if x <= 0.5:
-        target = np.array([[2.5-2.5*np.cos(2*np.pi*x)], [2.5*np.sin(2*np.pi*x)],[np.pi/2-2*np.pi*x]])           ##desire x,y,theta theta is in radius
-    else:
-        target = np.array([[7.5-2.5*np.cos(-(x-0.5)*2*np.pi)], [2.5*np.sin(-(x-0.5)*2*np.pi)], [-np.pi/2+(x-0.5)*2*np.pi]])
+    target = np.array([[5.0*np.cos(np.pi*x)], [5.0*np.sin(np.pi*x)],[np.pi*x]])           ##desire x,y,theta theta is in radius
     return target
     
-def g_id_follower1(x):      #the trajectory of the follower
-    if x <= 0.5:
-        target = np.array([[5*np.sin(np.pi*x)], [5*np.cos(x * np.pi)], [-x*np.pi]])
-    else:
-        target = np.array([[8-3*np.cos(-(x-0.5)*2*np.pi)], [3*np.sin(-(x-0.5)*2*np.pi)], [-np.pi/2+(x-0.5)*2*np.pi]])
+def g_id_follower1(x):      #the trajectory of the follower 1
+    target = np.array([[4.0*np.cos(np.pi*x)], [4.0*np.sin(np.pi*x)],[np.pi*x]])
     return target
 
-def g_id_follower2(x):      #the trajectory of the follower
-    if x <= 0.5:
-        target = np.array([[8.5-3.5*np.sin(np.pi*x)], [3.5*np.cos(x * np.pi)], [-np.pi+x*np.pi]])
-    else:
-        target = np.array([[8.5-3.5*np.cos(-(x-0.5)*2*np.pi)], [3.5*np.sin(-(x-0.5)*2*np.pi)], [-np.pi/2+(x-0.5)*2*np.pi]])
+def g_id_follower2(x):      #the trajectory of the follower 2 
+    target = np.array([[6.0*np.cos(np.pi*x)], [6.0*np.sin(np.pi*x)],[np.pi*x]])
     return target
 
 def dynamic(true_position, control_input, time_step, disturbance=True):
@@ -152,13 +143,13 @@ def main():
     leader_true_x, follower1_true_x, follower2_true_x = g_id_leader(x_init[0][0]), g_id_follower1(x_init[1][0]), g_id_follower2(x_init[2][0])
     
     # Initiallization
-    Leader_virtual_target[0], Leader_true_x[0] = np.array([0,0,1.57]),  np.array([0,0,1.57])
+    Leader_virtual_target[0], Leader_true_x[0] = leader_true_x.T,  leader_true_x.T
     Follower1_virtual_target[0], Follower1_true_x[0] = follower1_true_x.T, follower1_true_x.T
     Follower2_virtual_target[0], Follower2_true_x[0] = follower2_true_x.T, follower2_true_x.T
 
     Use_cbf = True
-    use_to_the_end = True
-    safe_distance = 0.9
+    use_to_the_end = False
+    safe_distance = 1.0
     u_leader_old, u_follower1_old, u_follower2_old = np.array([[0],[0]]), np.array([[0],[0]]), np.array([[0],[0]])
     
     for t in range(time_step):
@@ -176,7 +167,7 @@ def main():
                 if Use_cbf == True:
                     control_input += cbf(control_input, u_leader_old, leader_true_x, follower1_true_x, follower2_true_x, d_s=safe_distance)
                 # print(control_input)
-                leader_true_x = dynamic(leader_true_x, control_input, time_step, disturbance=False)
+                leader_true_x = dynamic(leader_true_x, control_input, time_step, disturbance=True)
                 error = virtual_target - leader_true_x
                 cum_error += error
                 u_leader_old = control_input
@@ -190,7 +181,7 @@ def main():
                 control_input_1 = UN_controller(virtual_target_1, follower1_true_x, follower1_error, desire_speed=8.5*np.pi/time_step)
                 if Use_cbf == True:
                     control_input_1 += cbf(control_input_1, u_follower1_old, follower1_true_x, leader_true_x, follower2_true_x, d_s=safe_distance)
-                follower1_true_x = dynamic(follower1_true_x, control_input_1, time_step, disturbance=0)
+                follower1_true_x = dynamic(follower1_true_x, control_input_1, time_step, disturbance=True)
                 follower1_error = virtual_target_1 - follower1_true_x
                 u_follower1_old = control_input_1
 
@@ -203,7 +194,7 @@ def main():
                 control_input_2 = UN_controller(virtual_target_2, follower2_true_x, follower2_error, desire_speed=7*np.pi/time_step)
                 if Use_cbf == True:
                     control_input_2 += cbf(control_input_2, u_follower2_old, follower2_true_x, leader_true_x, follower1_true_x, d_s=safe_distance)
-                follower2_true_x = dynamic(follower2_true_x, control_input_2, time_step, disturbance=0)
+                follower2_true_x = dynamic(follower2_true_x, control_input_2, time_step, disturbance=True)
                 follower2_error = virtual_target_2 - follower2_true_x
                 u_follower2_old = control_input_2
 
@@ -220,7 +211,7 @@ def main():
                 control_input += cbf(control_input, u_leader_old, leader_true_x, follower1_true_x, follower2_true_x, d_s=safe_distance)
                 control_input_1 += cbf(control_input_1, u_follower1_old, follower1_true_x, leader_true_x, follower2_true_x, d_s=safe_distance)
                 control_input_2 += cbf(control_input_2, u_follower2_old, follower2_true_x, leader_true_x, follower1_true_x, d_s=safe_distance)
-            leader_true_x = dynamic(leader_true_x, control_input, time_step, disturbance=True)
+            leader_true_x = dynamic(leader_true_x, control_input, time_step, disturbance=0)
             follower1_true_x = dynamic(follower1_true_x, control_input_1, time_step, disturbance=0)
             follower2_true_x = dynamic(follower2_true_x, control_input_2, time_step, disturbance=0)
             error = virtual_target - leader_true_x
@@ -244,7 +235,7 @@ def main():
     T_2 = np.linspace(0, time_step_1+1, num=time_step_1+1)
     print(time_step_1, time_step)
     fig1 = plt.figure()
-    ax1 = plt.axes(xlim=(0, 15), ylim=(-5, 5))
+    ax1 = plt.axes(xlim=(-10, 10), ylim=(-10, 10))
     line1, = ax1.plot([], [], marker='o', color='r')
     traj1, = plt.plot([],[], color='r', alpha=0.5)
     line2, = ax1.plot([], [], marker='o', color='b')
@@ -264,10 +255,6 @@ def main():
         line3.set_data(plot_for_anim_follower2[0][i], plot_for_anim_follower2[1][i])
         traj3.set_data(plot_for_anim_follower2[0][:i+1], plot_for_anim_follower2[1][:i+1])
         return line1,traj1,line2,traj2,line3,traj3,
-    rec1 = matplotlib.patches.Rectangle((1.5,-2),2,3,color='black')             # plot the building
-    rec2 = matplotlib.patches.Rectangle((6.5,-1),2,3,color='black')
-    ax1.add_patch(rec1)
-    ax1.add_patch(rec2)
     anim = animation.FuncAnimation(fig1, animate, frames=time_step_1+1, interval=20, blit=True)
     plt.draw()
     plt.show()
@@ -312,10 +299,6 @@ def main():
     plt.plot(np.transpose(Follower1_true_x)[0], np.transpose(Follower1_true_x)[1])
     plt.plot(np.transpose(Follower2_virtual_target)[0], np.transpose(Follower2_virtual_target)[1])
     plt.plot(np.transpose(Follower2_true_x)[0], np.transpose(Follower2_true_x)[1])
-    rec1 = matplotlib.patches.Rectangle((1.5,-2),2,3,color='black')             # plot the building
-    rec2 = matplotlib.patches.Rectangle((6.5,-1),2,3,color='black')
-    ax.add_patch(rec1)
-    ax.add_patch(rec2)
     plt.show()
  
 
