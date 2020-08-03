@@ -21,7 +21,7 @@ def UN_LN_controller(virtual_target, true_position, error):
     return u_true
 
 def UN_controller(virtual_target, true_position, error,desire_speed = 5*np.pi/50,desire_angular = 2*np.pi/50):
-    k2 = -10000                                       # A Nonlinear Controller for the Unicycle Model 
+    k2 = -100                                       # A Nonlinear Controller for the Unicycle Model 
     true_x_error = np.cos(true_position[2][0])*error[0][0] + np.sin(true_position[2][0])*error[1][0]
     true_y_error = np.cos(true_position[2][0])*error[1][0] - np.sin(true_position[2][0])*error[0][0]
 
@@ -50,9 +50,9 @@ def PI_controller(virtual_target, true_position, error, cum_error):
 
 def g_id_leader(x):         # the trajectory of the leader
     if x <= 0.5:
-        target = np.array([[2.5-2.5*np.cos(2*np.pi*x)], [2.5*np.sin(2*np.pi*x)],[np.pi/2-2*np.pi*x]])           ##desire x,y,theta theta is in radius
+        target = np.array([[8.5-3.5*np.sin(np.pi*x)], [3.5*np.cos(x * np.pi)], [-np.pi+x*np.pi]])
     else:
-        target = np.array([[7.5-2.5*np.cos(-(x-0.5)*2*np.pi)], [2.5*np.sin(-(x-0.5)*2*np.pi)], [-np.pi/2+(x-0.5)*2*np.pi]])
+        target = np.array([[8.5-3.5*np.cos(-(x-0.5)*2*np.pi)], [3.5*np.sin(-(x-0.5)*2*np.pi)], [-np.pi/2+(x-0.5)*2*np.pi]])
     return target
     
 def g_id_follower1(x):      #the trajectory of the follower
@@ -64,9 +64,9 @@ def g_id_follower1(x):      #the trajectory of the follower
 
 def g_id_follower2(x):      #the trajectory of the follower
     if x <= 0.5:
-        target = np.array([[8.5-3.5*np.sin(np.pi*x)], [3.5*np.cos(x * np.pi)], [-np.pi+x*np.pi]])
+        target = np.array([[2.5-2.5*np.cos(2*np.pi*x)], [2.5*np.sin(2*np.pi*x)],[np.pi/2-2*np.pi*x]])           ##desire x,y,theta theta is in radius
     else:
-        target = np.array([[8.5-3.5*np.cos(-(x-0.5)*2*np.pi)], [3.5*np.sin(-(x-0.5)*2*np.pi)], [-np.pi/2+(x-0.5)*2*np.pi]])
+        target = np.array([[7.5-2.5*np.cos(-(x-0.5)*2*np.pi)], [2.5*np.sin(-(x-0.5)*2*np.pi)], [-np.pi/2+(x-0.5)*2*np.pi]])
     return target
 
 def dynamic(true_position, control_input, time_step, disturbance=True):
@@ -78,7 +78,6 @@ def dynamic(true_position, control_input, time_step, disturbance=True):
         d = 0
     true_x = true_position[0][0] + control_input[0][0]*np.cos(true_position[2][0]) * 1/time_step + d
     true_y = true_position[1][0] + control_input[0][0]*np.sin(true_position[2][0]) * 1/time_step + d
-    # true_theta = true_position[2][0] + control_input[0][0]*np.tan(control_input[1][0]) * 1/time_step
     true_theta = true_position[2][0] + control_input[1][0] * 1/time_step
     return np.array([[true_x], [true_y], [true_theta]])
 
@@ -89,8 +88,8 @@ def cbf(u_norminal, u_old, agent1_position, agent2_position, agent3_position, d_
     partial_h_x2 = matrix([2*(x-agent3_position[0][0]), 2*(y-agent3_position[1][0]), 0], (1,3))
     h_x1 = (x-agent2_position[0][0])**2 + (y-agent2_position[1][0])**2 - d_s**2
     h_x2 = (x-agent3_position[0][0])**2 + (y-agent3_position[1][0])**2 - d_s**2
-    alpha = 1000
-    uv_max,uv_min,uomega_max,uomega_min = 50.0,-10.0,50.0,-50.0
+    alpha = 10000
+    uv_max,uv_min,uomega_max,uomega_min = 50.0,-10.0,20.0,-20.0
     lipschitz_constrain = 10
     upper_lipschitz_cons = lipschitz_constrain + u_old[0][0] - u_norminal[0][0]
     lower_lipschitz_cons = u_norminal[0][0] - u_old[0][0] + lipschitz_constrain 
@@ -104,13 +103,40 @@ def cbf(u_norminal, u_old, agent1_position, agent2_position, agent3_position, d_
     # G = -g
     # h = matrix([alpha * h_x]) + g * matrix(u_norminal)
 
-    h_1 = alpha * h_x1 ** 3 + g1 * matrix(u_norminal)
-    h_2 = alpha * h_x2 ** 3 + g2 * matrix(u_norminal)
+    h_1 = alpha * h_x1 ** 5 + g1 * matrix(u_norminal)
+    h_2 = alpha * h_x2 ** 5 + g2 * matrix(u_norminal)
     # G = matrix([[-g[0],1.0,-1.0,0.0,0.0], [0.0,0.0,0.0,1.0,-1.0]])
     # h = matrix([h_0[0][0],uv_max-u_norminal[0][0],-uv_min+u_norminal[0][0],uomega_max-u_norminal[1][0],-uomega_min+u_norminal[1][0]])
 
     # G = matrix([[-g[0],1.0,-1.0,0.0,0.0,1.0,-1.0], [0.0,0.0,0.0,1.0,-1.0,0.0,0.0]])
     # h = matrix([h_0[0][0],uv_max-u_norminal[0][0],-uv_min+u_norminal[0][0],uomega_max-u_norminal[1][0],-uomega_min+u_norminal[1][0],upper_lipschitz_cons,lower_lipschitz_cons])
+
+    G = matrix([[-g1[0],-g2[0],1.0,-1.0,0.0,0.0,1.0,-1.0], [0.0,0.0,0.0,0.0,1.0,-1.0,0.0,0.0]])
+    h = matrix([h_1[0][0],h_2[0][0],uv_max-u_norminal[0][0],-uv_min+u_norminal[0][0],uomega_max-u_norminal[1][0],-uomega_min+u_norminal[1][0],upper_lipschitz_cons,lower_lipschitz_cons])
+
+    sol = solvers.qp(P,q,G,h)
+    u_cbf = np.array(sol['x'])
+    return u_cbf
+
+def centerailized_cbf(u_norminal, u_old, agent1_position, agent2_position, agent3_position, d_s=1):
+    x, y, theta = agent1_position[0][0], agent1_position[1][0], agent1_position[2][0]
+    g_x = matrix([[np.cos(theta), 0], [np.sin(theta), 0], [0, 1]], (3,2))
+    partial_h_x1 = matrix([2*(x-agent2_position[0][0]), 2*(y-agent2_position[1][0]), 0], (1,3))
+    partial_h_x2 = matrix([2*(x-agent3_position[0][0]), 2*(y-agent3_position[1][0]), 0], (1,3))
+    h_x1 = (x-agent2_position[0][0])**2 + (y-agent2_position[1][0])**2 - d_s**2
+    h_x2 = (x-agent3_position[0][0])**2 + (y-agent3_position[1][0])**2 - d_s**2
+    alpha = 1000
+    uv_max,uv_min,uomega_max,uomega_min = 50.0,-10.0,50.0,-50.0
+    lipschitz_constrain = 10
+    upper_lipschitz_cons = lipschitz_constrain + u_old[0][0] - u_norminal[0][0]
+    lower_lipschitz_cons = u_norminal[0][0] - u_old[0][0] + lipschitz_constrain 
+    g1 = partial_h_x1*g_x
+    g2 = partial_h_x2*g_x
+    P = matrix([[1.0,0.0],[0.0,1.0]])
+    q = matrix([0.0,0.0])
+
+    h_1 = alpha * h_x1 ** 3 + g1 * matrix(u_norminal)
+    h_2 = alpha * h_x2 ** 3 + g2 * matrix(u_norminal)
 
     G = matrix([[-g1[0],-g2[0],1.0,-1.0,0.0,0.0,1.0,-1.0], [0.0,0.0,0.0,0.0,1.0,-1.0,0.0,0.0]])
     h = matrix([h_1[0][0],h_2[0][0],uv_max-u_norminal[0][0],-uv_min+u_norminal[0][0],uomega_max-u_norminal[1][0],-uomega_min+u_norminal[1][0],upper_lipschitz_cons,lower_lipschitz_cons])
@@ -152,12 +178,12 @@ def main():
     leader_true_x, follower1_true_x, follower2_true_x = g_id_leader(x_init[0][0]), g_id_follower1(x_init[1][0]), g_id_follower2(x_init[2][0])
     
     # Initiallization
-    Leader_virtual_target[0], Leader_true_x[0] = np.array([0,0,1.57]),  np.array([0,0,1.57])
+    Leader_virtual_target[0], Leader_true_x[0] = leader_true_x.T,  leader_true_x.T
     Follower1_virtual_target[0], Follower1_true_x[0] = follower1_true_x.T, follower1_true_x.T
     Follower2_virtual_target[0], Follower2_true_x[0] = follower2_true_x.T, follower2_true_x.T
 
     Use_cbf = True
-    use_to_the_end = True
+    use_to_the_end = False
     safe_distance = 0.9
     u_leader_old, u_follower1_old, u_follower2_old = np.array([[0],[0]]), np.array([[0],[0]]), np.array([[0],[0]])
     
@@ -245,17 +271,19 @@ def main():
     print(time_step_1, time_step)
     fig1 = plt.figure()
     ax1 = plt.axes(xlim=(0, 15), ylim=(-5, 5))
-    line1, = ax1.plot([], [], marker='o', color='r')
+    line1, = ax1.plot([],[], marker='o', color='r')
     traj1, = plt.plot([],[], color='r', alpha=0.5)
-    line2, = ax1.plot([], [], marker='o', color='b')
+    line2, = ax1.plot([],[], marker='o', color='b')
     traj2, = plt.plot([],[], color='b', alpha=0.5)
-    line3, = ax1.plot([], [], marker='o', color='g')
+    line3, = ax1.plot([],[], marker='o', color='g')
     traj3, = plt.plot([],[], color='g', alpha=0.5)
-
+    line4, = ax1.plot([],[], marker='*', color='k')
+    traj4, = plt.plot([],[], color='k', alpha=0.5)
 
     plot_for_anim_leader = np.transpose(Leader_true_x)
     plot_for_anim_follower1 = np.transpose(Follower1_true_x)
     plot_for_anim_follower2 = np.transpose(Follower2_true_x)
+    plot_for_anim_leader_target = np.transpose(Leader_virtual_target)
     def animate(i):
         line1.set_data(plot_for_anim_leader[0][i], plot_for_anim_leader[1][i])
         traj1.set_data(plot_for_anim_leader[0][:i+1], plot_for_anim_leader[1][:i+1])
@@ -263,7 +291,9 @@ def main():
         traj2.set_data(plot_for_anim_follower1[0][:i+1], plot_for_anim_follower1[1][:i+1])
         line3.set_data(plot_for_anim_follower2[0][i], plot_for_anim_follower2[1][i])
         traj3.set_data(plot_for_anim_follower2[0][:i+1], plot_for_anim_follower2[1][:i+1])
-        return line1,traj1,line2,traj2,line3,traj3,
+        line4.set_data(plot_for_anim_leader_target[0][i], plot_for_anim_leader_target[1][i])
+        traj4.set_data(plot_for_anim_leader_target[0][:i+1], plot_for_anim_leader_target[1][:i+1])
+        return line1,traj1,line2,traj2,line3,traj3,line4,traj4,
     rec1 = matplotlib.patches.Rectangle((1.5,-2),2,3,color='black')             # plot the building
     rec2 = matplotlib.patches.Rectangle((6.5,-1),2,3,color='black')
     ax1.add_patch(rec1)

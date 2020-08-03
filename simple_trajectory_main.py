@@ -21,7 +21,7 @@ def UN_LN_controller(virtual_target, true_position, error):
     return u_true
 
 def UN_controller(virtual_target, true_position, error,desire_speed = 5*np.pi/50,desire_angular = 2*np.pi/50):
-    k2 = -10000                                       # A Nonlinear Controller for the Unicycle Model 
+    k2 = -10000                                      # A Nonlinear Controller for the Unicycle Model 
     true_x_error = np.cos(true_position[2][0])*error[0][0] + np.sin(true_position[2][0])*error[1][0]
     true_y_error = np.cos(true_position[2][0])*error[1][0] - np.sin(true_position[2][0])*error[0][0]
 
@@ -49,15 +49,15 @@ def PI_controller(virtual_target, true_position, error, cum_error):
     return u_true
 
 def g_id_leader(x):         # the trajectory of the leader
-    target = np.array([[5.0*np.cos(np.pi*x)], [5.0*np.sin(np.pi*x)],[np.pi*x]])           ##desire x,y,theta theta is in radius
+    target = np.array([[10.0*x], [0.0],[0.0]])           ##desire x,y,theta theta is in radius
     return target
     
 def g_id_follower1(x):      #the trajectory of the follower 1
-    target = np.array([[4.0*np.cos(np.pi*x)], [4.0*np.sin(np.pi*x)],[np.pi*x]])
+    target = np.array([[5-5.0*np.cos(np.pi*x)], [-6.0+5.0*np.sin(np.pi*x)],[-np.pi*x]])
     return target
 
 def g_id_follower2(x):      #the trajectory of the follower 2 
-    target = np.array([[6.0*np.cos(np.pi*x)], [6.0*np.sin(np.pi*x)],[np.pi*x]])
+    target = np.array([[5-5.0*np.cos(np.pi*x)], [6.0-5.0*np.sin(np.pi*x)],[np.pi*x]])
     return target
 
 def dynamic(true_position, control_input, time_step, disturbance=True):
@@ -149,7 +149,7 @@ def main():
 
     Use_cbf = True
     use_to_the_end = False
-    safe_distance = 1.0
+    safe_distance = 3.0
     u_leader_old, u_follower1_old, u_follower2_old = np.array([[0],[0]]), np.array([[0],[0]]), np.array([[0],[0]])
     
     for t in range(time_step):
@@ -162,12 +162,12 @@ def main():
         for i in range(num_agent):
             if i == 0:
                 virtual_target =  g_id_leader(x[i][0])
-                control_input = UN_controller(virtual_target, leader_true_x, error, desire_speed=10*np.pi/time_step)
+                control_input = UN_controller(virtual_target, leader_true_x, error, desire_speed=15/time_step)
                 # print(control_input)
                 if Use_cbf == True:
                     control_input += cbf(control_input, u_leader_old, leader_true_x, follower1_true_x, follower2_true_x, d_s=safe_distance)
                 # print(control_input)
-                leader_true_x = dynamic(leader_true_x, control_input, time_step, disturbance=True)
+                leader_true_x = dynamic(leader_true_x, control_input, time_step, disturbance=0)
                 error = virtual_target - leader_true_x
                 cum_error += error
                 u_leader_old = control_input
@@ -178,10 +178,10 @@ def main():
 
             if i == 1:
                 virtual_target_1 = g_id_follower1(x[i][0])
-                control_input_1 = UN_controller(virtual_target_1, follower1_true_x, follower1_error, desire_speed=8.5*np.pi/time_step)
+                control_input_1 = UN_controller(virtual_target_1, follower1_true_x, follower1_error, desire_speed=10*np.pi/time_step)
                 if Use_cbf == True:
                     control_input_1 += cbf(control_input_1, u_follower1_old, follower1_true_x, leader_true_x, follower2_true_x, d_s=safe_distance)
-                follower1_true_x = dynamic(follower1_true_x, control_input_1, time_step, disturbance=True)
+                follower1_true_x = dynamic(follower1_true_x, control_input_1, time_step, disturbance=0)
                 follower1_error = virtual_target_1 - follower1_true_x
                 u_follower1_old = control_input_1
 
@@ -191,10 +191,10 @@ def main():
 
             if i == 2:
                 virtual_target_2 = g_id_follower2(x[i][0])
-                control_input_2 = UN_controller(virtual_target_2, follower2_true_x, follower2_error, desire_speed=7*np.pi/time_step)
+                control_input_2 = UN_controller(virtual_target_2, follower2_true_x, follower2_error, desire_speed=10*np.pi/time_step)
                 if Use_cbf == True:
                     control_input_2 += cbf(control_input_2, u_follower2_old, follower2_true_x, leader_true_x, follower1_true_x, d_s=safe_distance)
-                follower2_true_x = dynamic(follower2_true_x, control_input_2, time_step, disturbance=True)
+                follower2_true_x = dynamic(follower2_true_x, control_input_2, time_step, disturbance=0)
                 follower2_error = virtual_target_2 - follower2_true_x
                 u_follower2_old = control_input_2
 
@@ -235,7 +235,7 @@ def main():
     T_2 = np.linspace(0, time_step_1+1, num=time_step_1+1)
     print(time_step_1, time_step)
     fig1 = plt.figure()
-    ax1 = plt.axes(xlim=(-10, 10), ylim=(-10, 10))
+    ax1 = plt.axes(xlim=(0, 14), ylim=(-7, 7))
     line1, = ax1.plot([], [], marker='o', color='r')
     traj1, = plt.plot([],[], color='r', alpha=0.5)
     line2, = ax1.plot([], [], marker='o', color='b')
@@ -286,7 +286,7 @@ def main():
     Distance3 = (np.transpose(Follower2_true_x)[0]-np.transpose(Follower1_true_x)[0])**2 + (np.transpose(Follower2_true_x)[1]-np.transpose(Follower1_true_x)[1])**2
     plt.plot(T_1, Distance1, label='distance1')
     plt.plot(T_1, Distance2, label='distance2')
-    plt.plot(T_1, Distance3, label='distance3')
+    # plt.plot(T_1, Distance3, label='distance3')
     plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0.)
     plt.axhline(y=safe_distance**2, color='r', linestyle='-')
     plt.show()
