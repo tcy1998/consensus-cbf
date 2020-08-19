@@ -21,7 +21,7 @@ def UN_LN_controller(virtual_target, true_position, error):
     return u_true
 
 def UN_controller(virtual_target, true_position, error,desire_speed = 5*np.pi/50,desire_angular = 2*np.pi/50):
-    k2 = -10000                                      # A Nonlinear Controller for the Unicycle Model 
+    k2 = -100                                       # A Nonlinear Controller for the Unicycle Model 
     true_x_error = np.cos(true_position[2][0])*error[0][0] + np.sin(true_position[2][0])*error[1][0]
     true_y_error = np.cos(true_position[2][0])*error[1][0] - np.sin(true_position[2][0])*error[0][0]
 
@@ -35,50 +35,50 @@ def k_function(x1, x2):
     zeta, beta = -100, 100
     return 2*zeta*np.sqrt(x1**2+beta*x2**2)
 
+
+def PI_controller(virtual_target, true_position, error, cum_error):
+    kp1, ki1 = 15, 1
+    kp2, ki2 = 10, 1
+    true_x_error = error[0][0]
+    true_y_error = error[1][0]
+    true_theta = true_position[2][0]
+    u_v = kp1 * (true_x_error * np.cos(true_theta) + true_y_error * np.sin(true_theta)) +\
+        ki1 * (cum_error[0][0] * np.cos(true_theta) + cum_error[1][0] * np.sin(true_theta))
+    u_r = kp2 * (error[2][0]) + ki2 * (cum_error[2][0])
+    u_true = np.array([[u_v], [u_r]])
+    return u_true
+
 def g_id_leader(x):         # the trajectory of the leader
-    if x < 1:
-        target = np.array([[10.0*x], [0.0],[0.0]])           ##desire x,y,theta theta is in radius
+    if x <= 0.5:
+        target = np.array([[8.5-3.5*np.sin(np.pi*x)], [3.5*np.cos(x * np.pi)], [-np.pi+x*np.pi]])
     else:
-        target = np.array([[10.0*1], [0.0],[0.0]])
+        target = np.array([[8.5-3.5*np.cos(-(x-0.5)*2*np.pi)], [3.5*np.sin(-(x-0.5)*2*np.pi)], [-np.pi/2+(x-0.5)*2*np.pi]])
     return target
     
-def g_id_follower1(x):      #the trajectory of the follower 1
-    if x < 1:
-        target = np.array([[5-5.0*np.cos(np.pi*x)], [-6.0+5.0*np.sin(np.pi*x)],[-np.pi*x]])
+def g_id_follower1(x):      #the trajectory of the follower
+    if x <= 0.5:
+        target = np.array([[5*np.sin(np.pi*x)], [5*np.cos(x * np.pi)], [-x*np.pi]])
     else:
-        target = np.array([[5-5.0*np.cos(np.pi*1)], [-6.0+5.0*np.sin(np.pi*1)],[-np.pi*1]])
+        target = np.array([[8-3*np.cos(-(x-0.5)*2*np.pi)], [3*np.sin(-(x-0.5)*2*np.pi)], [-np.pi/2+(x-0.5)*2*np.pi]])
     return target
 
-def g_id_follower2(x):      #the trajectory of the follower 2
-    if x < 1: 
-        target = np.array([[5-5.0*np.cos(np.pi*x)], [6.0-5.0*np.sin(np.pi*x)],[np.pi*x]])
+def g_id_follower2(x):      #the trajectory of the follower
+    if x <= 0.5:
+        target = np.array([[2.5-2.5*np.cos(2*np.pi*x)], [2.5*np.sin(2*np.pi*x)],[np.pi/2-2*np.pi*x]])           ##desire x,y,theta theta is in radius
     else:
-        target = np.array([[5-5.0*np.cos(np.pi*1)], [6.0-5.0*np.sin(np.pi*1)],[np.pi*1]])
+        target = np.array([[7.5-2.5*np.cos(-(x-0.5)*2*np.pi)], [2.5*np.sin(-(x-0.5)*2*np.pi)], [-np.pi/2+(x-0.5)*2*np.pi]])
     return target
 
-# def g_id_leader(x):         # the trajectory of the leader
-#     target = np.array([[12.0*x], [0.0],[0.0]])           ##desire x,y,theta theta is in radius
-#     return target
-    
-# def g_id_follower1(x):      #the trajectory of the follower 1
-#     target = np.array([[12.0*x], [12.0*x-6],[np.pi/4]])
-#     return target
-
-# def g_id_follower2(x):      #the trajectory of the follower 2 
-#     target = np.array([[12.0*x], [6.0-12.0*x],[-np.pi/4]])
-#     return target
-
-def dynamic(true_position, control_input, time_step_size, disturbance=True):
+def dynamic(true_position, control_input, time_step, disturbance=True):
     mu = 0
     sigma = 0.01
     if disturbance == True:                                             #disturbance for dynamic model
         d = np.random.normal(mu, sigma)
     else:
         d = 0
-    true_x = true_position[0][0] + control_input[0][0]*np.cos(true_position[2][0]) * time_step_size + d
-    true_y = true_position[1][0] + control_input[0][0]*np.sin(true_position[2][0]) * time_step_size + d
-    # true_theta = true_position[2][0] + control_input[0][0]*np.tan(control_input[1][0]) * 1/time_step
-    true_theta = true_position[2][0] + control_input[1][0] * time_step_size
+    true_x = true_position[0][0] + control_input[0][0]*np.cos(true_position[2][0]) * 1/time_step + d
+    true_y = true_position[1][0] + control_input[0][0]*np.sin(true_position[2][0]) * 1/time_step + d
+    true_theta = true_position[2][0] + control_input[1][0] * 1/time_step
     return np.array([[true_x], [true_y], [true_theta]])
 
 def cbf(u_norminal, u_old, agent1_position, agent2_position, agent3_position, d_s=1):
@@ -88,8 +88,8 @@ def cbf(u_norminal, u_old, agent1_position, agent2_position, agent3_position, d_
     partial_h_x2 = matrix([2*(x-agent3_position[0][0]), 2*(y-agent3_position[1][0]), 0], (1,3))
     h_x1 = (x-agent2_position[0][0])**2 + (y-agent2_position[1][0])**2 - d_s**2
     h_x2 = (x-agent3_position[0][0])**2 + (y-agent3_position[1][0])**2 - d_s**2
-    alpha = 1000
-    uv_max,uv_min,uomega_max,uomega_min = 50.0,-10.0,50.0,-50.0
+    alpha = 100000
+    uv_max,uv_min,uomega_max,uomega_min = 50.0,-10.0,20.0,-20.0
     lipschitz_constrain = 10
     upper_lipschitz_cons = lipschitz_constrain + u_old[0][0] - u_norminal[0][0]
     lower_lipschitz_cons = u_norminal[0][0] - u_old[0][0] + lipschitz_constrain 
@@ -103,8 +103,8 @@ def cbf(u_norminal, u_old, agent1_position, agent2_position, agent3_position, d_
     # G = -g
     # h = matrix([alpha * h_x]) + g * matrix(u_norminal)
 
-    h_1 = alpha * h_x1 ** 3 + g1 * matrix(u_norminal)
-    h_2 = alpha * h_x2 ** 3 + g2 * matrix(u_norminal)
+    h_1 = alpha * h_x1 ** 5 + g1 * matrix(u_norminal)
+    h_2 = alpha * h_x2 ** 5 + g2 * matrix(u_norminal)
     # G = matrix([[-g[0],1.0,-1.0,0.0,0.0], [0.0,0.0,0.0,1.0,-1.0]])
     # h = matrix([h_0[0][0],uv_max-u_norminal[0][0],-uv_min+u_norminal[0][0],uomega_max-u_norminal[1][0],-uomega_min+u_norminal[1][0]])
 
@@ -131,10 +131,9 @@ def main():
     P = np.array([[0.4,0.6],[0.4,0.6]])
     rho = 1
     time_step = time_step_1 = 600
-    time_step_size = 0.002
     
-    L_matrix = np.array([[2,-1,-1],[-1,2,-1],[-1,-1,2]])
-    # L_matrix = np.array([[1,-1,0],[-1,2,-1],[0,-1,1]])
+    # L_matrix = np.array([[2,-1,-1],[-1,2,-1],[-1,-1,2]])
+    L_matrix = np.array([[1,-1,0],[-1,2,-1],[0,-1,1]])
     C = np.array([[0, 1, 0],[0, 0, 1]])
 
     x = x_init
@@ -156,70 +155,90 @@ def main():
     Follower1_virtual_target[0], Follower1_true_x[0] = follower1_true_x.T, follower1_true_x.T
     Follower2_virtual_target[0], Follower2_true_x[0] = follower2_true_x.T, follower2_true_x.T
 
+    Leader_norminal, Leader_cbf = np.zeros(shape=(time_step+1,2)), np.zeros(shape=(time_step+1,2))
+
     Use_cbf = True
     use_to_the_end = False
-    Use_feedback = True
-    safe_distance = 3.0
+    safe_distance = 0.9
     u_leader_old, u_follower1_old, u_follower2_old = np.array([[0],[0]]), np.array([[0],[0]]), np.array([[0],[0]])
-    Error_all = np.array([[0],[0],[0]])
-    k_e = 10
+
+    cbf_Leader_true_x, cbf_Leader_control_input = np.zeros(shape=(time_step+1,3)), np.zeros(shape=(time_step+1,2))
+    cbf_Follower1_true_x, cbf_Follower1_control_input = np.zeros(shape=(time_step+1,3)), np.zeros(shape=(time_step+1,2))
+    cbf_Follower2_true_x, cbf_Follower2_control_input = np.zeros(shape=(time_step+1,3)), np.zeros(shape=(time_step+1,2))
+    cbf_Leader_true_x[0] = leader_true_x.T
+    cbf_Follower1_true_x[0] = follower1_true_x.T
+    cbf_Follower2_true_x[0] = follower2_true_x.T
     
     for t in range(time_step):
         u = - k_p * np.dot(L_matrix,x) + np.vstack((rho, kai))
-        if Use_feedback == True:
-            u_change = -k_e * Error_all
-            u += u_change
         kai += -k_i * C.dot(L_matrix.dot(x))                        #kai the virtual time
-        x = x + (u + np.vstack((0, d)))* time_step_size
+        x = x + (u + np.vstack((0, d)))* 1 /time_step
         X[t+1] = x.ravel()
         U[t+1] = u.ravel()
         
         for i in range(num_agent):
             if i == 0:
                 virtual_target =  g_id_leader(x[i][0])
-                control_input = UN_controller(virtual_target, leader_true_x, error, desire_speed=15/time_step)
-                # print(control_input)
-                if Use_cbf == True:
-                    control_input += cbf(control_input, u_leader_old, leader_true_x, follower1_true_x, follower2_true_x, d_s=safe_distance)
-                # print(control_input)
-                leader_true_x = dynamic(leader_true_x, control_input, time_step_size, disturbance=0)
+                control_input = UN_controller(virtual_target, leader_true_x, error, desire_speed=10*np.pi/time_step)
+                leader_true_x = dynamic(leader_true_x, control_input, time_step, disturbance=False)
                 error = virtual_target - leader_true_x
-                cum_error += error
-                u_leader_old = control_input
 
                 Leader_virtual_target[t+1] = virtual_target.ravel()
                 Leader_true_x[t+1] = leader_true_x.ravel()
                 Leader_control_input[t+1] = control_input.ravel()
-                # Error_all[0] = np.sqrt(error[0]**2+error[1]**2)
-                Error_all[0] = np.maximum(abs(error[0]), abs(error[1]))
 
             if i == 1:
                 virtual_target_1 = g_id_follower1(x[i][0])
-                control_input_1 = UN_controller(virtual_target_1, follower1_true_x, follower1_error, desire_speed=10*np.pi/time_step)
-                if Use_cbf == True:
-                    control_input_1 += cbf(control_input_1, u_follower1_old, follower1_true_x, leader_true_x, follower2_true_x, d_s=safe_distance)
-                follower1_true_x = dynamic(follower1_true_x, control_input_1, time_step_size, disturbance=0)
+                control_input_1 = UN_controller(virtual_target_1, follower1_true_x, follower1_error, desire_speed=8.5*np.pi/time_step)
+                follower1_true_x = dynamic(follower1_true_x, control_input_1, time_step, disturbance=0)
                 follower1_error = virtual_target_1 - follower1_true_x
-                u_follower1_old = control_input_1
 
                 Follower1_virtual_target[t+1] = virtual_target_1.ravel()
                 Follower1_true_x[t+1] = follower1_true_x.ravel()
                 Follower1_control_input[t+1] = control_input_1.ravel()
-                Error_all[1] = np.sqrt(follower1_error[0]**2+follower1_error[1]**2)
 
             if i == 2:
                 virtual_target_2 = g_id_follower2(x[i][0])
-                control_input_2 = UN_controller(virtual_target_2, follower2_true_x, follower2_error, desire_speed=10*np.pi/time_step)
-                if Use_cbf == True:
-                    control_input_2 += cbf(control_input_2, u_follower2_old, follower2_true_x, leader_true_x, follower1_true_x, d_s=safe_distance)
-                follower2_true_x = dynamic(follower2_true_x, control_input_2, time_step_size, disturbance=0)
+                control_input_2 = UN_controller(virtual_target_2, follower2_true_x, follower2_error, desire_speed=7*np.pi/time_step)
+                follower2_true_x = dynamic(follower2_true_x, control_input_2, time_step, disturbance=0)
                 follower2_error = virtual_target_2 - follower2_true_x
-                u_follower2_old = control_input_2
 
                 Follower2_virtual_target[t+1] = virtual_target_2.ravel()
                 Follower2_true_x[t+1] = follower2_true_x.ravel()
                 Follower2_control_input[t+1] = control_input_2.ravel()
-                Error_all[2] = np.sqrt(follower2_error[0]**2+follower2_error[1]**2)
+
+    if Use_cbf == True:
+        leader_true_x, follower1_true_x, follower2_true_x = g_id_leader(x_init[0][0]), g_id_follower1(x_init[1][0]), g_id_follower2(x_init[2][0])
+        for t in range(time_step):
+            for i in range(num_agent):
+                if i == 0:
+                    control_input = Leader_control_input[t].reshape((2,1))
+                    control_cbf = cbf(control_input, u_leader_old, leader_true_x, follower1_true_x, follower2_true_x, d_s=safe_distance)
+                    control_input += control_cbf
+                    leader_true_x = dynamic(leader_true_x, control_input, time_step, disturbance=False)
+                    u_leader_old = control_input
+
+                    cbf_Leader_true_x[t+1] = leader_true_x.ravel()
+                    cbf_Leader_control_input[t+1] = control_input.ravel()
+                    Leader_cbf[t+1] = control_cbf.ravel()
+
+                if i == 1:
+                    control_input_1 = Follower1_control_input[t].reshape((2,1))
+                    control_input_1 += cbf(control_input_1, u_follower1_old, follower1_true_x, leader_true_x, follower2_true_x, d_s=safe_distance)
+                    follower1_true_x = dynamic(follower1_true_x, control_input_1, time_step, disturbance=0)
+                    u_follower1_old = control_input_1
+
+                    cbf_Follower1_true_x[t+1] = follower1_true_x.ravel()
+                    cbf_Follower1_control_input[t+1] = control_input_1.ravel()
+
+                if i == 2:
+                    control_input_2 = Follower2_control_input[t].reshape((2,1))
+                    control_input_2 += cbf(control_input_2, u_follower2_old, follower2_true_x, leader_true_x, follower1_true_x, d_s=safe_distance)
+                    follower2_true_x = dynamic(follower2_true_x, control_input_2, time_step, disturbance=0)
+                    u_follower2_old = control_input_2
+
+                    cbf_Follower2_true_x[t+1] = follower2_true_x.ravel()
+                    cbf_Follower2_control_input[t+1] = control_input_2.ravel()
         
     if use_to_the_end == True:
         while abs(error[1][0]) > 1e-2 or abs(follower1_error[1][0]) > 1e-2 or abs(follower2_error[1][0]) > 1e-2 or abs(error[0][0]) > 1e-2 or abs(follower1_error[0][0]) > 1e-2 or abs(follower2_error[0][0]) > 1e-2:
@@ -230,7 +249,7 @@ def main():
                 control_input += cbf(control_input, u_leader_old, leader_true_x, follower1_true_x, follower2_true_x, d_s=safe_distance)
                 control_input_1 += cbf(control_input_1, u_follower1_old, follower1_true_x, leader_true_x, follower2_true_x, d_s=safe_distance)
                 control_input_2 += cbf(control_input_2, u_follower2_old, follower2_true_x, leader_true_x, follower1_true_x, d_s=safe_distance)
-            leader_true_x = dynamic(leader_true_x, control_input, time_step, disturbance=0)
+            leader_true_x = dynamic(leader_true_x, control_input, time_step, disturbance=True)
             follower1_true_x = dynamic(follower1_true_x, control_input_1, time_step, disturbance=0)
             follower2_true_x = dynamic(follower2_true_x, control_input_2, time_step, disturbance=0)
             error = virtual_target - leader_true_x
@@ -254,27 +273,20 @@ def main():
     T_2 = np.linspace(0, time_step_1+1, num=time_step_1+1)
     print(time_step_1, time_step)
     fig1 = plt.figure()
-    ax1 = plt.axes(xlim=(0, 14), ylim=(-7, 7))
-    line1, = ax1.plot([], [], marker='o', color='r')
+    ax1 = plt.axes(xlim=(0, 15), ylim=(-5, 5))
+    line1, = ax1.plot([],[], marker='o', color='r')
     traj1, = plt.plot([],[], color='r', alpha=0.5)
-    line2, = ax1.plot([], [], marker='o', color='b')
+    line2, = ax1.plot([],[], marker='o', color='b')
     traj2, = plt.plot([],[], color='b', alpha=0.5)
-    line3, = ax1.plot([], [], marker='o', color='g')
+    line3, = ax1.plot([],[], marker='o', color='g')
     traj3, = plt.plot([],[], color='g', alpha=0.5)
     line4, = ax1.plot([],[], marker='*', color='k')
     traj4, = plt.plot([],[], color='k', alpha=0.5)
-    line5, = ax1.plot([],[], marker='*', color='k')
-    traj5, = plt.plot([],[], color='k', alpha=0.5)
-    line6, = ax1.plot([],[], marker='*', color='k')
-    traj6, = plt.plot([],[], color='k', alpha=0.5)
-
 
     plot_for_anim_leader = np.transpose(Leader_true_x)
     plot_for_anim_follower1 = np.transpose(Follower1_true_x)
     plot_for_anim_follower2 = np.transpose(Follower2_true_x)
     plot_for_anim_leader_target = np.transpose(Leader_virtual_target)
-    plot_for_anim_follower1_target = np.transpose(Follower1_virtual_target)
-    plot_for_anim_follower2_target = np.transpose(Follower2_virtual_target)
     def animate(i):
         line1.set_data(plot_for_anim_leader[0][i], plot_for_anim_leader[1][i])
         traj1.set_data(plot_for_anim_leader[0][:i+1], plot_for_anim_leader[1][:i+1])
@@ -284,11 +296,11 @@ def main():
         traj3.set_data(plot_for_anim_follower2[0][:i+1], plot_for_anim_follower2[1][:i+1])
         line4.set_data(plot_for_anim_leader_target[0][i], plot_for_anim_leader_target[1][i])
         traj4.set_data(plot_for_anim_leader_target[0][:i+1], plot_for_anim_leader_target[1][:i+1])
-        line5.set_data(plot_for_anim_follower1_target[0][i], plot_for_anim_follower1_target[1][i])
-        traj5.set_data(plot_for_anim_follower1_target[0][:i+1], plot_for_anim_follower1_target[1][:i+1])
-        line6.set_data(plot_for_anim_follower2_target[0][i], plot_for_anim_follower2_target[1][i])
-        traj6.set_data(plot_for_anim_follower2_target[0][:i+1], plot_for_anim_follower2_target[1][:i+1])
-        return line1,traj1,line2,traj2,line3,traj3,line4,traj4,line5,traj5,line6,traj6,
+        return line1,traj1,line2,traj2,line3,traj3,line4,traj4,
+    rec1 = matplotlib.patches.Rectangle((1.5,-2),2,3,color='black')             # plot the building
+    rec2 = matplotlib.patches.Rectangle((6.5,-1),2,3,color='black')
+    ax1.add_patch(rec1)
+    ax1.add_patch(rec2)
     anim = animation.FuncAnimation(fig1, animate, frames=time_step_1+1, interval=20, blit=True)
     plt.draw()
     plt.show()
@@ -310,6 +322,14 @@ def main():
     plt.title('control_input')
     plt.show()
 
+    # Leader_norminal = Leader_control_input - Leader_cbf
+    # plt.plot(T_2, np.transpose(Leader_control_input)[0], label='Final Input')
+    # plt.plot(T_2, np.transpose(Leader_cbf)[0], label='CBF Input')
+    # plt.plot(T_2, np.transpose(Leader_norminal)[0], label='Norminal Input')
+    # plt.title('Control Input Leader')
+    # plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0.)
+    # plt.show()
+
     Error = Leader_virtual_target-Leader_true_x
     plt.plot(T_1, np.transpose(Error)[0])
     plt.plot(T_1, np.transpose(Error)[1])
@@ -320,7 +340,7 @@ def main():
     Distance3 = (np.transpose(Follower2_true_x)[0]-np.transpose(Follower1_true_x)[0])**2 + (np.transpose(Follower2_true_x)[1]-np.transpose(Follower1_true_x)[1])**2
     plt.plot(T_1, Distance1, label='distance1')
     plt.plot(T_1, Distance2, label='distance2')
-    # plt.plot(T_1, Distance3, label='distance3')
+    plt.plot(T_1, Distance3, label='distance3')
     plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0.)
     plt.axhline(y=safe_distance**2, color='r', linestyle='-')
     plt.show()
@@ -333,7 +353,56 @@ def main():
     plt.plot(np.transpose(Follower1_true_x)[0], np.transpose(Follower1_true_x)[1])
     plt.plot(np.transpose(Follower2_virtual_target)[0], np.transpose(Follower2_virtual_target)[1])
     plt.plot(np.transpose(Follower2_true_x)[0], np.transpose(Follower2_true_x)[1])
+    rec1 = matplotlib.patches.Rectangle((1.5,-2),2,3,color='black')             # plot the building
+    rec2 = matplotlib.patches.Rectangle((6.5,-1),2,3,color='black')
+    ax.add_patch(rec1)
+    ax.add_patch(rec2)
     plt.show()
+
+    
+    if Use_cbf == True:
+        fig2 = plt.figure()
+        ax2 = plt.axes(xlim=(0, 15), ylim=(-5, 5))
+        line5, = ax2.plot([],[], marker='o', color='r')
+        traj5, = plt.plot([],[], color='r', alpha=0.5)
+        line6, = ax2.plot([],[], marker='o', color='b')
+        traj6, = plt.plot([],[], color='b', alpha=0.5)
+        line7, = ax2.plot([],[], marker='o', color='g')
+        traj7, = plt.plot([],[], color='g', alpha=0.5)
+        line8, = ax2.plot([],[], marker='*', color='k')
+        traj8, = plt.plot([],[], color='k', alpha=0.5)
+
+        cbf_plot_for_anim_leader = np.transpose(cbf_Leader_true_x)
+        cbf_plot_for_anim_follower1 = np.transpose(cbf_Follower1_true_x)
+        cbf_plot_for_anim_follower2 = np.transpose(cbf_Follower2_true_x)
+        cbf_plot_for_anim_leader_target = np.transpose(Leader_virtual_target)
+        def animate1(i):
+            line5.set_data(cbf_plot_for_anim_leader[0][i], cbf_plot_for_anim_leader[1][i])
+            traj5.set_data(cbf_plot_for_anim_leader[0][:i+1], cbf_plot_for_anim_leader[1][:i+1])
+            line6.set_data(cbf_plot_for_anim_follower1[0][i], cbf_plot_for_anim_follower1[1][i])
+            traj6.set_data(cbf_plot_for_anim_follower1[0][:i+1], cbf_plot_for_anim_follower1[1][:i+1])
+            line7.set_data(cbf_plot_for_anim_follower2[0][i], cbf_plot_for_anim_follower2[1][i])
+            traj7.set_data(cbf_plot_for_anim_follower2[0][:i+1], cbf_plot_for_anim_follower2[1][:i+1])
+            line8.set_data(cbf_plot_for_anim_leader_target[0][i], cbf_plot_for_anim_leader_target[1][i])
+            traj8.set_data(cbf_plot_for_anim_leader_target[0][:i+1], cbf_plot_for_anim_leader_target[1][:i+1])
+            return line5,traj5,line6,traj6,line7,traj7,line8,traj8,
+        rec1 = matplotlib.patches.Rectangle((1.5,-2),2,3,color='black')             # plot the building
+        rec2 = matplotlib.patches.Rectangle((6.5,-1),2,3,color='black')
+        ax2.add_patch(rec1)
+        ax2.add_patch(rec2)
+        anim1 = animation.FuncAnimation(fig2, animate1, frames=time_step_1+1, interval=20, blit=True)
+        plt.draw()
+        plt.show()
+
+        cbf_Distance1 = (np.transpose(cbf_Leader_true_x)[0]-np.transpose(cbf_Follower1_true_x)[0])**2 + (np.transpose(cbf_Leader_true_x)[1]-np.transpose(cbf_Follower1_true_x)[1])**2
+        cbf_Distance2 = (np.transpose(cbf_Leader_true_x)[0]-np.transpose(cbf_Follower2_true_x)[0])**2 + (np.transpose(cbf_Leader_true_x)[1]-np.transpose(cbf_Follower2_true_x)[1])**2
+        cbf_Distance3 = (np.transpose(cbf_Follower2_true_x)[0]-np.transpose(cbf_Follower1_true_x)[0])**2 + (np.transpose(cbf_Follower2_true_x)[1]-np.transpose(cbf_Follower1_true_x)[1])**2
+        plt.plot(T_1, cbf_Distance1, label='distance1')
+        plt.plot(T_1, cbf_Distance2, label='distance2')
+        plt.plot(T_1, cbf_Distance3, label='distance3')
+        plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0.)
+        plt.axhline(y=safe_distance**2, color='r', linestyle='-')
+        plt.show()
  
 
     

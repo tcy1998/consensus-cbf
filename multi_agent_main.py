@@ -4,21 +4,6 @@ import copy
 import matplotlib
 from cvxopt import matrix, solvers
 import matplotlib.animation as animation
-    
-def UN_LN_controller(virtual_target, true_position, error):
-    k1 = -40
-    k2 = -100
-    k3 = -2                                        # A Linear Controller for the Unicycle Model
-    desire_speed = 5*np.pi/50
-    desire_angular = 2*np.pi/50
-    true_x_error = np.cos(true_position[2][0])*error[0][0] + np.sin(true_position[2][0])*error[1][0]
-    true_y_error = np.cos(true_position[2][0])*error[1][0] - np.sin(true_position[2][0])*error[0][0]
-
-    u_v = -k1 * true_x_error
-    u_r = -k2 * np.sign(desire_speed) * true_y_error - k3 * error[2][0]
-
-    u_true = np.array([[u_v], [u_r]])
-    return u_true
 
 def UN_controller(virtual_target, true_position, error,desire_speed = 5*np.pi/50,desire_angular = 2*np.pi/50):
     k2 = -10000                                      # A Nonlinear Controller for the Unicycle Model 
@@ -56,18 +41,6 @@ def g_id_follower2(x):      #the trajectory of the follower 2
         target = np.array([[5-5.0*np.cos(np.pi*1)], [6.0-5.0*np.sin(np.pi*1)],[np.pi*1]])
     return target
 
-# def g_id_leader(x):         # the trajectory of the leader
-#     target = np.array([[12.0*x], [0.0],[0.0]])           ##desire x,y,theta theta is in radius
-#     return target
-    
-# def g_id_follower1(x):      #the trajectory of the follower 1
-#     target = np.array([[12.0*x], [12.0*x-6],[np.pi/4]])
-#     return target
-
-# def g_id_follower2(x):      #the trajectory of the follower 2 
-#     target = np.array([[12.0*x], [6.0-12.0*x],[-np.pi/4]])
-#     return target
-
 def dynamic(true_position, control_input, time_step_size, disturbance=True):
     mu = 0
     sigma = 0.01
@@ -93,23 +66,15 @@ def cbf(u_norminal, u_old, agent1_position, agent2_position, agent3_position, d_
     lipschitz_constrain = 10
     upper_lipschitz_cons = lipschitz_constrain + u_old[0][0] - u_norminal[0][0]
     lower_lipschitz_cons = u_norminal[0][0] - u_old[0][0] + lipschitz_constrain 
-    # print(partial_h_x*g_x)
+
     g1 = partial_h_x1*g_x
     g2 = partial_h_x2*g_x
-    # print(g.shape)
+
     P = matrix([[1.0,0.0],[0.0,1.0]])
     q = matrix([0.0,0.0])
 
-    # G = -g
-    # h = matrix([alpha * h_x]) + g * matrix(u_norminal)
-
     h_1 = alpha * h_x1 ** 3 + g1 * matrix(u_norminal)
     h_2 = alpha * h_x2 ** 3 + g2 * matrix(u_norminal)
-    # G = matrix([[-g[0],1.0,-1.0,0.0,0.0], [0.0,0.0,0.0,1.0,-1.0]])
-    # h = matrix([h_0[0][0],uv_max-u_norminal[0][0],-uv_min+u_norminal[0][0],uomega_max-u_norminal[1][0],-uomega_min+u_norminal[1][0]])
-
-    # G = matrix([[-g[0],1.0,-1.0,0.0,0.0,1.0,-1.0], [0.0,0.0,0.0,1.0,-1.0,0.0,0.0]])
-    # h = matrix([h_0[0][0],uv_max-u_norminal[0][0],-uv_min+u_norminal[0][0],uomega_max-u_norminal[1][0],-uomega_min+u_norminal[1][0],upper_lipschitz_cons,lower_lipschitz_cons])
 
     G = matrix([[-g1[0],-g2[0],1.0,-1.0,0.0,0.0,1.0,-1.0], [0.0,0.0,0.0,0.0,1.0,-1.0,0.0,0.0]])
     h = matrix([h_1[0][0],h_2[0][0],uv_max-u_norminal[0][0],-uv_min+u_norminal[0][0],uomega_max-u_norminal[1][0],-uomega_min+u_norminal[1][0],upper_lipschitz_cons,lower_lipschitz_cons])
@@ -334,8 +299,6 @@ def main():
     plt.plot(np.transpose(Follower2_virtual_target)[0], np.transpose(Follower2_virtual_target)[1])
     plt.plot(np.transpose(Follower2_true_x)[0], np.transpose(Follower2_true_x)[1])
     plt.show()
- 
-
     
 main()
 
