@@ -88,24 +88,23 @@ def main():
     lead_num_agent = 1
     follow_num_agent = num_agent - lead_num_agent
 
-    x_init = np.array([[0.0],[0.0],[0.0]])
-    kai_init = np.array([[1.0],[1.0]])
+    x_init = np.zeros((num_agent,1))
+    kai_init = np.zeros((follow_num_agent,1))
     k_p = 10
     k_i = 5
-    d = np.array([[0.2],[-0.1]])
-    P = np.array([[0.4,0.6],[0.4,0.6]])
+    # d = np.array([[2],[-0.1]])
+    d = np.random.randn(follow_num_agent,1)
     rho = 1
     time_step = time_step_1 = 600
     time_step_size = 0.002
     
-    L_matrix = np.array([[2,-1,-1],[-1,2,-1],[-1,-1,2]])
-    # L_matrix = np.array([[1,-1,0],[-1,2,-1],[0,-1,1]])
-    C = np.array([[0, 1, 0],[0, 0, 1]])
+    L_matrix = np.full((num_agent, num_agent),-1) + (num_agent)*np.eye(num_agent)
+    C = np.hstack((np.zeros((follow_num_agent,lead_num_agent)),np.eye(follow_num_agent)))
 
     x = x_init
     kai = kai_init
-    X = np.zeros(shape=(time_step+1,3))
-    U = np.zeros(shape=(time_step+1,3))
+    X = np.zeros(shape=(time_step+1,num_agent))
+    U = np.zeros(shape=(time_step+1,num_agent))
     X[0] = x.ravel()
 
     # Define variables
@@ -113,7 +112,7 @@ def main():
     Follower1_virtual_target, Follower1_true_x, Follower1_control_input = np.zeros(shape=(time_step+1,3)), np.zeros(shape=(time_step+1,3)), np.zeros(shape=(time_step+1,2))
     Follower2_virtual_target, Follower2_true_x, Follower2_control_input = np.zeros(shape=(time_step+1,3)), np.zeros(shape=(time_step+1,3)), np.zeros(shape=(time_step+1,2))
 
-    cum_error, error, follower1_error, follower2_error = np.zeros((3,1)), np.zeros((3,1)), np.zeros((3,1)), np.zeros((3,1))
+    error, follower1_error, follower2_error = np.zeros((3,1)), np.zeros((3,1)), np.zeros((3,1))
     leader_true_x, follower1_true_x, follower2_true_x = g_id_leader(x_init[0][0]), g_id_follower1(x_init[1][0]), g_id_follower2(x_init[2][0])
     
     # Initiallization
@@ -135,7 +134,7 @@ def main():
             u_change = -k_e * Error_all
             u += u_change
         kai += -k_i * C.dot(L_matrix.dot(x))                        #kai the virtual time
-        x = x + (u + np.vstack((0, d)))* time_step_size
+        x = x + (u + np.vstack((np.zeros((lead_num_agent,1)), d)))* time_step_size
         X[t+1] = x.ravel()
         U[t+1] = u.ravel()
         

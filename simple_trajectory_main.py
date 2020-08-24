@@ -44,16 +44,16 @@ def g_id_leader(x):         # the trajectory of the leader
     
 def g_id_follower1(x):      #the trajectory of the follower 1
     if x < 1:
-        target = np.array([[5-5.0*np.cos(np.pi*x)], [-6.0+5.0*np.sin(np.pi*x)],[-np.pi*x]])
+        target = np.array([[5-5.0*np.cos(np.pi*x)], [-6.0+5.0*np.sin(np.pi*x)],[np.pi/2-np.pi*x]])
     else:
-        target = np.array([[5-5.0*np.cos(np.pi*1)], [-6.0+5.0*np.sin(np.pi*1)],[-np.pi*1]])
+        target = np.array([[5-5.0*np.cos(np.pi*1)], [-6.0+5.0*np.sin(np.pi*1)],[np.pi/2-np.pi*1]])
     return target
 
 def g_id_follower2(x):      #the trajectory of the follower 2
     if x < 1: 
-        target = np.array([[5-5.0*np.cos(np.pi*x)], [6.0-5.0*np.sin(np.pi*x)],[np.pi*x]])
+        target = np.array([[5-5.0*np.cos(np.pi*x)], [6.0-5.0*np.sin(np.pi*x)],[-np.pi/2+np.pi*x]])
     else:
-        target = np.array([[5-5.0*np.cos(np.pi*1)], [6.0-5.0*np.sin(np.pi*1)],[np.pi*1]])
+        target = np.array([[5-5.0*np.cos(np.pi*1)], [6.0-5.0*np.sin(np.pi*1)],[-np.pi/2+np.pi*1]])
     return target
 
 # def g_id_leader(x):         # the trajectory of the leader
@@ -162,7 +162,7 @@ def main():
     safe_distance = 3.0
     u_leader_old, u_follower1_old, u_follower2_old = np.array([[0],[0]]), np.array([[0],[0]]), np.array([[0],[0]])
     Error_all = np.array([[0],[0],[0]])
-    k_e = 10
+    k_e = 2
     
     for t in range(time_step):
         u = - k_p * np.dot(L_matrix,x) + np.vstack((rho, kai))
@@ -170,6 +170,7 @@ def main():
             u_change = -k_e * Error_all
             u += u_change
         kai += -k_i * C.dot(L_matrix.dot(x))                        #kai the virtual time
+        u.clip(0)
         x = x + (u + np.vstack((0, d)))* time_step_size
         X[t+1] = x.ravel()
         U[t+1] = u.ravel()
@@ -190,8 +191,8 @@ def main():
                 Leader_virtual_target[t+1] = virtual_target.ravel()
                 Leader_true_x[t+1] = leader_true_x.ravel()
                 Leader_control_input[t+1] = control_input.ravel()
-                # Error_all[0] = np.sqrt(error[0]**2+error[1]**2)
-                Error_all[0] = np.maximum(abs(error[0]), abs(error[1]))
+                Error_all[0] = np.sqrt(error[0]**2+error[1]**2)
+                # Error_all[0] = np.maximum(abs(error[0]), abs(error[1]))
 
             if i == 1:
                 virtual_target_1 = g_id_follower1(x[i][0])
