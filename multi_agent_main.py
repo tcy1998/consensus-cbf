@@ -17,7 +17,7 @@ def UN_controller(virtual_target, true_position, error,desire_speed = 5*np.pi/50
     return u_true
 
 def k_function(x1, x2):
-    zeta, beta = -100, 100
+    zeta, beta = -1000, 100
     return 2*zeta*np.sqrt(x1**2+beta*x2**2)
     
 def g_id_follower1(x):      #the trajectory of the follower 1
@@ -84,15 +84,17 @@ def cbf(u_norminal, u_old, Dict, index, t, num_agent, d_s):
 
     h = alpha * h_x ** 3 + g.dot(u_norminal)
 
-    G = matrix([matrix(g),g_prime])
-    h = matrix([matrix(h),h_prime])
+    # G = matrix([matrix(g),g_prime])
+    # h = matrix([matrix(h),h_prime])
+    G = matrix([matrix(g)])
+    h = matrix([matrix(h)])
 
     sol = solvers.qp(P,q,G,h)
     u_cbf = np.array(sol['x'])
     return u_cbf
 
 def main():
-    num_agent = 10
+    num_agent = 3
     lead_num_agent = 1
     follow_num_agent = num_agent - lead_num_agent
 
@@ -132,7 +134,7 @@ def main():
 
     Use_cbf = True
     Use_feedback = False
-    safe_distance = 0.1*np.pi/num_agent
+    safe_distance = 1*np.pi/num_agent
     Error_all = np.array([[0],[0],[0]])
     k_e = 10
     
@@ -222,12 +224,17 @@ def main():
     plt.plot(T, np.transpose(X)[2])
     plt.show()
 
-    ax1 = plt.axes(xlim=(-7, 7), ylim=(-7, 7))
-    plt.plot(np.transpose(Trajectory["true1"])[0], np.transpose(Trajectory["true1"])[1])
-    # plt.plot(np.transpose(Trajectory["target1"])[0], np.transpose(Trajectory["target1"])[1])
+    ax1 = plt.axes(xlim=(-10, 10), ylim=(-10, 10))
+    for i in range(num_agent):
+        xx = np.transpose(Trajectory["true{0}".format(i)])[0]
+        yy = np.transpose(Trajectory["true{0}".format(i)])[1]
+        plt.plot(xx, yy)
+        print(xx,yy)
+    # plt.plot(np.transpose(Trajectory["true0"])[0], np.transpose(Trajectory["true0"])[1])
+    # plt.plot(np.transpose(Trajectory["target0"])[0], np.transpose(Trajectory["target0"])[1])
     plt.show()
 
-    print(Trajectory["true0"])
+    print(Trajectory["true1"])
 
     # plt.plot(T_2, np.transpose(Leader_control_input)[0])
     # plt.plot(T_2, np.transpose(Follower1_control_input)[0])
