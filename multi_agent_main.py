@@ -5,7 +5,7 @@ import matplotlib
 from cvxopt import matrix, solvers
 import matplotlib.animation as animation
 
-def UN_controller(virtual_target, true_position, error,desire_speed = 5*np.pi/50,desire_angular = 0):
+def UN_controller(virtual_target, true_position, error,desire_speed = 5*np.pi/50,desire_angular = np.pi):
     k2 = -10000                                     # A Nonlinear Controller for the Unicycle Model 
     true_x_error = np.cos(true_position[2][0])*error[0][0] + np.sin(true_position[2][0])*error[1][0]
     true_y_error = np.cos(true_position[2][0])*error[1][0] - np.sin(true_position[2][0])*error[0][0]
@@ -34,6 +34,13 @@ def line_trajectory(x,n,N):
         target = np.array([[-5.0*np.cos(2*np.pi*n/N)],[-5.0*np.sin(2*np.pi*n/N)],[2*np.pi*n/N-np.pi]])
     return target
 
+# def line_trajectory(x,n,N):
+#     if x < 1:
+#         target = np.array([[5.0*(1-n/N)*np.cos(2*np.pi*x)],[5*(1-n/N)*np.sin(2*np.pi*x)],[2*np.pi*x]])
+#     else:
+#         target = np.array([[5.0*(1-n/N)*np.cos(2*np.pi)],[5*(1-n/N)*np.sin(2*np.pi)],[2*np.pi]])
+#     return target
+
 def dynamic(true_position, control_input, time_step_size, disturbance=True):
     mu = 0
     sigma = 0.01
@@ -48,22 +55,21 @@ def dynamic(true_position, control_input, time_step_size, disturbance=True):
     return np.array([[true_x], [true_y], [true_theta]])
 
 def cbf(u_norminal, u_old, Dict, index, t, num_agent, d_s):
-    # x, y, theta = agent1_position[0][0], agent1_position[1][0], agent1_position[2][0]
     position_i = Dict["true{0}".format(index)][t]
-    # print(position_i)
     x, y, theta =  position_i[0], position_i[1], position_i[2]
     g_x = np.array([[np.cos(theta), 0], [np.sin(theta), 0], [0, 1]])
     partial_h_x = np.zeros((num_agent-1,3))
     h_x = np.zeros((num_agent-1,1))
     for j in range(0, num_agent):
         if j < index:
-            position_j = Dict["true{0}".format(j)][t]
+            position_j = Dict["true{0}".format(j)][t-1]
             partial_h_x[j][0] = 2*(x-position_j[0])
             partial_h_x[j][1] = 2*(y-position_j[1])
             partial_h_x[j][2] = 0
             h_x[j] = (x-position_j[0])**2 + (y-position_j[1])**2 - d_s**2
         if j > index:
-            position_j = Dict["true{0}".format(j)][t]
+            position_j = Dict["true{0}".format(j)][t-1]
+            print(position_j)
             partial_h_x[j-1][0] = 2*(x-position_j[0])
             partial_h_x[j-1][1] = 2*(y-position_j[1])
             partial_h_x[j-1][2] = 0
@@ -82,19 +88,19 @@ def cbf(u_norminal, u_old, Dict, index, t, num_agent, d_s):
     P = matrix([[1.0,0.0],[0.0,1.0]])
     q = matrix([0.0,0.0])
 
-    h = alpha * h_x ** 3 + g.dot(u_norminal)
+    hx = alpha * h_x ** 3 + g.dot(u_norminal)
 
     # G = matrix([matrix(g),g_prime])
     # h = matrix([matrix(h),h_prime])
-    G = matrix([matrix(g)])
-    h = matrix([matrix(h)])
+    G = matrix([matrix(-g)])
+    h = matrix([matrix(hx)]) 
 
     sol = solvers.qp(P,q,G,h)
     u_cbf = np.array(sol['x'])
     return u_cbf
 
 def main():
-    num_agent = 3
+    num_agent = 4
     lead_num_agent = 1
     follow_num_agent = num_agent - lead_num_agent
 
@@ -102,9 +108,10 @@ def main():
     kai_init = np.zeros((follow_num_agent,1))
     k_p = 10
     k_i = 5
-    d = np.random.randn(follow_num_agent,1)
+    # d = np.random.randn(follow_num_agent,1)
+    d = np.zeros((follow_num_agent,1))
     rho = 1
-    time_step = time_step_1 = 1000
+    time_step = time_step_1 = 2000
     time_step_size = 0.002
     
     L_matrix = np.full((num_agent, num_agent),-1) + (num_agent)*np.eye(num_agent)
@@ -134,7 +141,9 @@ def main():
 
     Use_cbf = True
     Use_feedback = False
-    safe_distance = 1*np.pi/num_agent
+    # safe_distance = 10*np.pi/num_agent
+    safe_distance = 0.5
+    # safe_distance = 4/num_agent
     Error_all = np.array([[0],[0],[0]])
     k_e = 10
     
@@ -154,9 +163,10 @@ def main():
             error = Trajectory["error{0}".format(i)][t].reshape((3,1))
             old_control_input = Trajectory["old_control_input{0}".format(i)]
 
-            control_input = UN_controller(virtual_target, true_x, error, desire_speed=0.01)
+            control_input = UN_controller(virtual_target, true_x, error, desire_speed=(1-i/num_agent)*0.07*np.pi, desire_angular=0.0002*np.pi)
             if Use_cbf == True:
-                control_input += cbf(control_input, old_control_input, Trajectory, i, t, num_agent, d_s=safe_distance)
+                u_cbf = cbf(control_input, old_control_input, Trajectory, i, t, num_agent, d_s=safe_distance)
+                control_input += u_cbf
             true_x = dynamic(true_x, control_input, time_step_size, disturbance=0)
             error = virtual_target - true_x
             
@@ -214,22 +224,25 @@ def main():
     # plt.show()
     # anim.save('basic_animation.mp4', fps=30, extra_args=['-vcodec', 'libx264'])
 
-    plt.plot(T, np.transpose(X)[0] - np.transpose(X)[1])
-    plt.plot(T, np.transpose(X)[0] - np.transpose(X)[2])
-    plt.plot(T, np.transpose(X)[2] - np.transpose(X)[1])
-    plt.show()
+    # plt.plot(T, np.transpose(X)[0] - np.transpose(X)[1])
+    # plt.plot(T, np.transpose(X)[0] - np.transpose(X)[2])
+    # plt.plot(T, np.transpose(X)[2] - np.transpose(X)[1])
+    # plt.show()
 
-    plt.plot(T, np.transpose(X)[0])
-    plt.plot(T, np.transpose(X)[1])
-    plt.plot(T, np.transpose(X)[2])
-    plt.show()
+    # plt.plot(T, np.transpose(X)[0])
+    # plt.plot(T, np.transpose(X)[1])
+    # plt.plot(T, np.transpose(X)[2])
+    # plt.show()
 
     ax1 = plt.axes(xlim=(-10, 10), ylim=(-10, 10))
     for i in range(num_agent):
         xx = np.transpose(Trajectory["true{0}".format(i)])[0]
         yy = np.transpose(Trajectory["true{0}".format(i)])[1]
-        plt.plot(xx, yy)
-        print(xx,yy)
+        xxd = np.transpose(Trajectory["target{0}".format(i)])[0]
+        yyd = np.transpose(Trajectory["target{0}".format(i)])[1]
+        plt.plot(xx, yy, color='blue')
+        plt.plot(xxd, yyd, color='green')
+        # print(xx,yy)
     # plt.plot(np.transpose(Trajectory["true0"])[0], np.transpose(Trajectory["true0"])[1])
     # plt.plot(np.transpose(Trajectory["target0"])[0], np.transpose(Trajectory["target0"])[1])
     plt.show()
