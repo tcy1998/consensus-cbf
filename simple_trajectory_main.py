@@ -2,8 +2,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 import copy
 import matplotlib
+matplotlib.use('Agg')
 from cvxopt import matrix, solvers
 import matplotlib.animation as animation
+from matplotlib.animation import FuncAnimation, PillowWriter 
     
 def UN_LN_controller(virtual_target, true_position, error):
     k1 = -40
@@ -156,9 +158,9 @@ def main():
     Follower1_virtual_target[0], Follower1_true_x[0] = follower1_true_x.T, follower1_true_x.T
     Follower2_virtual_target[0], Follower2_true_x[0] = follower2_true_x.T, follower2_true_x.T
 
-    Use_cbf = True
+    Use_cbf = False
     use_to_the_end = False
-    Use_feedback = True
+    Use_feedback = False
     safe_distance = 3.0
     u_leader_old, u_follower1_old, u_follower2_old = np.array([[0],[0]]), np.array([[0],[0]]), np.array([[0],[0]])
     Error_all = np.array([[0],[0],[0]])
@@ -291,9 +293,11 @@ def main():
         traj6.set_data(plot_for_anim_follower2_target[0][:i+1], plot_for_anim_follower2_target[1][:i+1])
         return line1,traj1,line2,traj2,line3,traj3,line4,traj4,line5,traj5,line6,traj6,
     anim = animation.FuncAnimation(fig1, animate, frames=time_step_1+1, interval=20, blit=True)
-    plt.draw()
-    plt.show()
-    # anim.save('basic_animation.mp4', fps=30, extra_args=['-vcodec', 'libx264'])
+    # plt.draw()
+    # plt.show()
+
+    writer = PillowWriter(fps=25)  
+    anim.save("demo_sine.mp4", writer=writer) 
 
     plt.plot(T, np.transpose(X)[0] - np.transpose(X)[1])
     plt.plot(T, np.transpose(X)[0] - np.transpose(X)[2])
