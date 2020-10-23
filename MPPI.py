@@ -46,7 +46,7 @@ class MPPI():
 
             beta = np.min(self.cost_total)  # minimum cost of all trajectories
             cost_total_non_zero = self._ensure_non_zero(cost=self.cost_total, beta=beta, factor=1/self.lambda_)
-            print(cost_total_non_zero)
+            # print(cost_total_non_zero)
             eta = np.sum(cost_total_non_zero)
             omega = 1/eta * cost_total_non_zero
             
@@ -63,7 +63,7 @@ class MPPI():
             self.U[-1] = self.u_init  #
             self.cost_total[:] = 0
             self.x_init = self.env.env.state
-            print(beta, self.x_init)
+            # print(beta, self.x_init)
 
 
 if __name__ == "__main__":

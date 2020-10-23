@@ -8,7 +8,7 @@ class MPPI():
         self.K = K
         self.T = T
         self.U = U
-        self.u_init = 1
+        self.u_init = 0
 
         self.lamda = lamda
 
@@ -60,13 +60,11 @@ class MPPI():
         sintheta = math.sin(theta)
         temp = self.polemass_length * theta_dot ** 2 * sintheta * self.masspole
         thetaacc = (-costheta * temp - force * costheta - self.masspole * self.gravity * sintheta - self.masscart * self.gravity * sintheta)/ ((self.masscart+ self.masspole*sintheta**2)*self.polemass_length)
-        xacc = (temp + force + self.polemass_length * sintheta * costheta * self.gravity) / (self.masscart + self.masspole*sintheta**2)
+        xacc = (temp + force + self.masspole * sintheta * costheta * self.gravity) / (self.masscart + self.masspole*sintheta**2)
         x_state = x_state + self.tau * x_dot_state
         x_dot_state = x_dot_state + self.tau * xacc
         theta = theta + self.tau * theta_dot
         theta_dot = theta_dot + self.tau * thetaacc
-        
-        
 
         x_new = np.array([x_state,x_dot_state,theta, theta_dot])
 
