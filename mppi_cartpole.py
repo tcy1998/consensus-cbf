@@ -36,18 +36,19 @@ class MPPI():
         x_start = self.x_init.copy()
         for t in range(self.T):
             perturbed_action_t = self.U[t] + self.noise[k, t]
+            # print(x_start,perturbed_action_t)
             x_start = self.dynamic(x_start,perturbed_action_t)
-            penalty = self.cost(x_start) #+self.U[t]*self.noise[k, t]*self.lamda
+            penalty = self.cost(x_start) + self.U[t]*perturbed_action_t*0.1
             self.Cost_total[k] += penalty
         term_cost = self.Term_Cost(x_start)
         self.Cost_total[k] += term_cost    
 
 
     def cost(self, x):
-        return 100*x[0]**2 +500* (x[2]-np.pi)**2  + x[1]**2 + x[3]**2
+        return 1*x[0]**2 +5* (x[2]-np.pi)**2  + 0.01*x[1]**2 + 0.1*x[3]**2
 
     def Term_Cost(self, x):
-        return 700*(x[2]-np.pi)**2  + 1000*x[1]**2 + 500*x[3]**2
+        return 70*(x[2]-np.pi)**2  + 10*x[1]**2 + 50*x[3]**2
 
     def dynamic(self, x, u):
         x_state = x[0]
@@ -56,8 +57,9 @@ class MPPI():
         theta_dot = x[3]
         force = u
         
-        costheta = math.cos(theta)
-        sintheta = math.sin(theta)
+        costheta = np.cos(theta)
+        sintheta = np.sin(theta)
+        # print(theta)
         temp = self.polemass_length * theta_dot ** 2 * sintheta * self.masspole
         thetaacc = (-costheta * temp - force * costheta - self.masspole * self.gravity * sintheta - self.masscart * self.gravity * sintheta)/ ((self.masscart+ self.masspole*sintheta**2)*self.polemass_length)
         xacc = (temp + force + self.masspole * sintheta * costheta * self.gravity) / (self.masscart + self.masspole*sintheta**2)
