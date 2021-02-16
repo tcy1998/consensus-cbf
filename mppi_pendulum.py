@@ -25,7 +25,7 @@ class MPPI():
         self.X, self.Reward = np.zeros(shape=(iter,2)),np.zeros(shape=(iter))
 
         self.x_init = [np.pi, 1]
-        self.theta_dot_bound = 4.0
+        self.theta_dot_bound = 5.0
 
         if noise_gaussian:
             self.noise = np.random.normal(loc=self.noise_mu, scale=self.noise_sigma, size=(self.K, self.T))
@@ -35,8 +35,9 @@ class MPPI():
     def _compute_total_cost(self, k):
         state = [0,0]
         state[:] = self.x_init[:]
-        use_cbf = True
+        use_cbf = False
         m,s = self.noise_mu, self.noise_sigma
+        count = 0
         for t in range(self.T):
             if use_cbf == True:
                 u_upper = m + 3*s+self.U[t]  #The maximum for the sample action
@@ -48,19 +49,35 @@ class MPPI():
                 m = (u_upper + u_lower)/2
                 s = (u_upper - u_lower)/6
                 if s < 0:
-                    s=1e-4
+                    s=1e-6
+                    count += 1
                 self.noise[k, t] = np.random.normal(loc=m, scale=s)
             perturbed_action_t = self.U[t] + self.noise[k, t]
             state,reward = self.dynamic(state, perturbed_action_t)
-            # print(state)
             self.cost_total[k] += reward
+        # self.cost_total[k] += 10*self.terminal_cost(state)
+        # print(count)
             
     def angle_normalize(self,x):
         return (((x+np.pi) % (2*np.pi)) - np.pi)
 
+    def terminal_cost(self,state):
+        th = state[0]
+        thdot = state[1]
+        cost = th ** 2 + 0.1*thdot ** 2
+        return cost
+
+    def step_like(self,x,y):
+        if x>y:
+            return x-y
+        if x<=y and x >= -y:
+            return 0
+        else:
+            return -x+y
     def dynamic(self, state, u):
         # print(state)
-        use_noise = True
+        use_noise = False
+        constraint_use = True
         th = state[0]
         thdot = state[1]
         g = self.g
@@ -69,7 +86,10 @@ class MPPI():
         dt = self.dt
         # print(u)
         u = np.clip(u, -self.max_torque, self.max_torque)
-        costs = self.angle_normalize(th) ** 2 + .1 * thdot ** 2 + .001 * (u ** 2)
+        if constraint_use == True:
+            costs = self.angle_normalize(th) ** 2 + .1 * thdot ** 2 + .001 * (u ** 2) - .1* self.step_like(thdot,self.theta_dot_bound)
+        else:
+            costs = self.angle_normalize(th) ** 2 + .1 * thdot ** 2 + .001 * (u ** 2)
         if use_noise == True:
             noise = np.random.normal(loc=0.0, scale=0.01)
         else:
@@ -97,33 +117,32 @@ class MPPI():
         Q = matrix([0.0])
         G = matrix([g])
         H = matrix([h])
-        solvers.options['show_progress'] = False
-        sol = solvers.qp(P,Q,G,H)
-        u_cbf = np.array(sol['x'])
-        return u_cbf[0][0]
+        # solvers.options['show_progress'] = False
+        # sol = solvers.qp(P,Q,G,H)
+        # u_cbf = np.array(sol['x'])
+        # return u_cbf[0][0]
+        u_cbf = self.qp_solver(g,h)
+        return u_cbf
 
     def _ensure_non_zero(self, cost, beta, factor):
         return np.exp(-factor * (cost - beta))
 
+    def qp_solver(self, g,h):
+        if g > 0:
+            if h/g >= 0:
+                return 0
+            if h/g < 0:
+                return h/g         
+        if g == 0:
+            return error
+        if g < 0:
+            if h/g >= 0:
+                return h/g
+            if h/g < 0:
+                return 0
 
     def control(self, iter=1000):       
         for _ in range(iter):
-            use_cbf = False
-            if use_cbf == True:
-                u_upper = self.noise_mu + 3*self.noise_sigma+self.U[0]  #The maximum for the sample action
-                u_lower = self.noise_mu - 3*self.noise_sigma+self.U[0]  
-                print(u_upper,u_lower)
-                u_upper += self.cbf(self.x_init,u_upper)-self.U[0]
-                u_lower += self.cbf(self.x_init,u_lower)-self.U[0]
-                self.noise_mu = (u_upper + u_lower)/2
-                self.noise_sigma = (u_upper - u_lower)/6
-                print(u_upper,u_lower)
-                # print(self.noise_mu, self.noise_sigma)
-                # print(self.dynamic(self.x_init,u_upper+self.U[0]))
-
-                # u_mean = self.noise_mu + self.U[0]
-
-                self.noise = np.random.normal(loc=self.noise_mu, scale=self.noise_sigma, size=(self.K, self.T))
             for k in range(self.K):
                 self._compute_total_cost(k)
 
@@ -131,14 +150,12 @@ class MPPI():
             cost_total_non_zero = self._ensure_non_zero(cost=self.cost_total, beta=beta, factor=1/self.lambda_)
             eta = np.sum(cost_total_non_zero)
             omega = 1/eta * cost_total_non_zero
-            
+            print(np.shape(omega *self.noise[:, 0]), np.shape(self.noise[:, 0]))
             
             self.U += [np.sum(omega * self.noise[:, t]) for t in range(self.T)]
             u_input = self.U[0]
-            if use_cbf == True:
-                u_input += self.cbf(self.x_init, u_input)
             s, r = self.dynamic(self.x_init,u_input)
-            print(r)
+            print(r,s)
 
             self.U = np.roll(self.U, -1)  # shift all elements to the left
             self.U[-1] = self.u_init  #
@@ -159,11 +176,11 @@ class MPPI():
         plt.show()
 
 if __name__ == "__main__":
-    TIMESTEPS = 10  # T
+    TIMESTEPS = 20  # T
     N_SAMPLES = 1000  # K
     ACTION_LOW = -2.0
     ACTION_HIGH = 2.0
-
+    length = 500
     noise_mu = 0
     noise_sigma = 10
     lambda_ = 0.0001

@@ -55,7 +55,7 @@ class MPPI():
 
             self.env.env.state = self.x_init
             s, r, _, _ = self.env.step([self.U[0]])
-            print("action taken: {:.2f} cost received: {:.2f}".format(self.U[0], -r))
+            # print("action taken: {:.2f} cost received: {:.2f}".format(self.U[0], -r))
             # self.env.render()
             # print(self.x_init,omega)
 
