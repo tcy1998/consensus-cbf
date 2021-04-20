@@ -2,6 +2,10 @@ import numpy as np
 import math
 import matplotlib.pyplot as plt
 from cvxopt import matrix, solvers
+import cvxpy as cp
+import numpy as np
+import cvxopt
+import time
 
 class MPPI():
     def __init__(self, K, T, U, lambda_=1.0, noise_mu=0, noise_sigma=0.1, u_init=1, noise_gaussian=True, downward_start=True, iter=100):
@@ -18,41 +22,44 @@ class MPPI():
         self.x_init = [0, 0, np.pi/4]
         self.t_init = 0
         self.target = [4,4,np.pi/4]
-        self.v_desire = 1.0 #0.25*np.sqrt(2)
+        self.v_desire = 0.0 #0.25*np.sqrt(2)
         self.w_desire = 0.0
         self.X, self.Reward = np.zeros(shape=(iter,3)),np.zeros(shape=(iter))
         self.iter = iter
-        self.max_speed = 2
-        self.max_angle_speed = 2
+        self.max_speed = 2.0
+        self.max_angle_speed = 2.0
 
         self.obstcle_x = 1.5
         self.obstcle_y = 1.0
         self.r =1.0
 
+        self.Obstacle_X = matrix([1, 1, 3])
+        self.Obstacle_Y = matrix([1, 3, 1.5])
+        self.R = matrix([0.5, 1.25, 0.75])
+
+        self.use_cbf = False
+        self.constraint_use = True
+        self.multi_ = True
+
 
     def _compute_total_cost(self, k):
         state = [0,0,0]
         state[:] = self.x_init[:]
-        use_cbf = True
         m,s = self.noise_mu, self.noise_sigma
         for t in range(self.T):
             
-            if use_cbf == True:
-                u_upper = m + 3*s+self.U[t]  #The maximum for the sample action
-                u_lower = m - 3*s+self.U[t]
-                # print(u_upper,state)
-                u_upper += self.cbf(state,u_upper).reshape((2,))-self.U[t]
-                u_lower += self.cbf(state,u_lower).reshape((2,))-self.U[t]
-                m = (u_upper + u_lower)/2
-                s = (u_upper - u_lower)/6
-                s = np.clip(s,0,None)
-                self.noise[k, t] = np.random.normal(loc=m, scale=s)
+            if self.use_cbf == True:
+                m_,s_ = self.sdp_cbf(state,self.U[t], m,s)
+                m = m+m_.T
+                s += s_
+                self.noise[k, t, :] = np.random.multivariate_normal(m[0], s)
 
             self.noise[k, t, 0] = np.clip(self.noise[k, t, 0], -self.max_speed-self.U[t][0], self.max_speed-self.U[t][0])
             self.noise[k, t, 1] = np.clip(self.noise[k, t, 1], -self.max_angle_speed-self.U[t][1], self.max_angle_speed-self.U[t][1])
             perturbed_action_t = self.U[t] + self.noise[k, t]
             state,reward = self.dynamic(state, perturbed_action_t)
-            self.cost_total[k] += reward
+            # print(self.U[t]@np.linalg.inv(s)@ self.noise[k,t].reshape(2,1))
+            self.cost_total[k] += reward + self.U[t] @ np.linalg.inv(s) @ self.noise[k,t].reshape(2,1)
         self.cost_total[k] += self.terminal_cost(state, perturbed_action_t)
 
 
@@ -61,7 +68,13 @@ class MPPI():
         y = state[1]
         theta = state[2]
         x_des, y_des, theta_des = self.target[0], self.target[1], self.target[2]
-        r = (x_des - x) ** 2 + (y_des - y) ** 2 + (0.1-u[0])**2
+        dist = (x - x_des)**2 + (y-y_des)**2
+        r = 0
+        # if dist > 0.5:
+        #     r = 10
+        # else:
+        #     r = 0
+        r += dist
         return r
 
     def angle_normalize(self,x):
@@ -76,9 +89,23 @@ class MPPI():
         else:
             return 0
 
+    def rectangular_obstacle(self, a, b, c, d, e, x, y):
+        if (a<x<b and 0<y<c) or (a<x<b and d<y<e):
+            return 1000
+        else:
+            return 0
+
+    def multi_obstacle(self, x, y):
+        r = 0
+        for i in range(len(self.Obstacle_X)):
+            dist = np.sqrt((x-self.Obstacle_X[i])**2+(y-self.Obstacle_Y[i])**2)
+            if dist < self.R[i]:
+                r += 1000
+        return r
+
     def dynamic(self, state, u):
         # print(state)True
-        constraint_use = False
+        
         x = state[0]
         y = state[1]
         theta = state[2]
@@ -97,8 +124,10 @@ class MPPI():
         state = [newx, newy, newtheta]
         costs = (x_des - newx) ** 2 + (y_des - newy) ** 2 + 1*(self.v_desire-u[0])**2# +1* (theta_des - theta)**2 #+ 10*(self.w_desire-u[1])**2
 
-        if constraint_use == True:
+        if self.constraint_use == True:
             costs += self.obstacle(newx, newy)
+        if self.multi_ == True:
+            costs += self.multi_obstacle(newx, newy)
             # print(costs)
 
         return state, costs
@@ -109,7 +138,7 @@ class MPPI():
 
         h_x = (position_x - self.obstcle_x)**2 + (position_y - self.obstcle_y)**2 - self.r **2
         g_x = matrix([[np.cos(theta), 0], [np.sin(theta), 0], [0, 1]], (3,2))
-        partial_hx = matrix([2*(position_x - self.obstcle_x), 2*(position_x - self.obstcle_x), 0], (1,3))
+        partial_hx = matrix([2*(position_x - self.obstcle_x), 2*(position_y - self.obstcle_y), 0], (1,3))
         g = partial_hx * g_x
         h = matrix(alpha * h_x**3) + g * matrix(u_norminal)
         # print(alpha * h_x ** 3,g * matrix(u_norminal))
@@ -121,6 +150,59 @@ class MPPI():
         u_cbf = np.array(sol['x'])
         # u_cbf = self.qp_solver(-g,h)
         return u_cbf
+
+    def sdp_cbf(self, state, u_norminal, mu, sigma):
+        position_x, position_y, theta = state[0], state[1], state[2]
+        alpha = 100
+
+        A_ = np.zeros((len(self.R),2))
+        B = np.zeros(len(self.R))
+
+        if self.multi_ == True:
+            for i in range(len(self.R)):
+                h_x = (position_x - self.Obstacle_X[i])**2 + (position_y - self.Obstacle_Y[i])**2 - self.R[i] **2
+                g_x = matrix([[np.cos(theta), 0], [np.sin(theta), 0], [0, 1]], (3,2))
+                partial_hx = matrix([2*(position_x - self.Obstacle_X[i]), 2*(position_y - self.Obstacle_Y[i]), 0.0], (1,3))
+                # print(A_[i],partial_hx * g_x)
+                A_[i] = partial_hx * g_x
+                C = matrix(A_[i], (2,1))
+                
+                B[i] = -matrix(alpha * h_x**3) - A_[i] @ matrix(u_norminal)
+                # print('1', C, A_[0],B[i])
+            variance = cp.Variable((2, 2), PSD=True)
+            mean = cp.Variable((2, 1))
+            constraints = [matrix(A_[0],(1,2)) @ variance @ matrix(A_[0],(2,1))+ A_[0] @ mean >> B[0],\
+                matrix(A_[1],(1,2)) @ variance @ matrix(A_[1],(2,1))+ A_[1] @ mean >> B[1],\
+                matrix(A_[2],(1,2)) @ variance @ matrix(A_[2],(2,1))+ A_[2] @ mean >> B[2],
+                variance >> 0]
+            objective = cp.Minimize(cp.trace(variance)+cp.norm(mean,1))
+            prob = cp.Problem(objective, constraints)
+            prob.solve()
+        else:
+
+            h_x = (position_x - self.obstcle_x)**2 + (position_y - self.obstcle_y)**2 - self.r **2
+            g_x = matrix([[np.cos(theta), 0], [np.sin(theta), 0], [0, 1]], (3,2))
+            partial_hx = matrix([2*(position_x - self.obstcle_x), 2*(position_y - self.obstcle_y), 0], (1,3))
+            A = partial_hx * g_x
+            b = -matrix(alpha * h_x**3) - A * matrix(u_norminal)
+
+            variance = cp.Variable((2, 2), PSD=True)
+            mean = cp.Variable((2, 1))
+            # print(A, A.T)
+            constraints = [A @ variance @ A.T+ A @ mean >> b, variance >> 0]
+            objective = cp.Minimize(cp.trace(variance)+cp.norm(mean,1))
+            # start_time = time.time()
+            prob = cp.Problem(objective, constraints)
+            prob.solve()
+
+            # print("The optimal value is", prob.value)
+            # print("A solution mean is")
+            # print(mean.value)
+            # print("A solution variance is")
+            # print(variance.value)
+            # print("--- %s seconds ---" % (time.time() - start_time))
+
+        return mean.value, variance.value
 
     def qp_solver(self,g,h):
         g_1 = g[0]
@@ -136,7 +218,7 @@ class MPPI():
     def control(self, iter=1000):
         
         for _ in range(iter):
-            self.noise = np.random.normal(loc=self.noise_mu, scale=self.noise_sigma, size=(self.K, self.T, 2))
+            self.noise = np.random.multivariate_normal(self.noise_mu, self.noise_sigma, size=(self.K, self.T))
             for k in range(self.K):
                 self._compute_total_cost(k)
             
@@ -169,30 +251,44 @@ class MPPI():
             #Save data for plotting
             self.X[_] = np.transpose(self.x_init)
             self.Reward[_] = r
+            # print(_)
+            if ((self.x_init[0]-self.target[0])**2 + (self.x_init[1]-self.target[1])**2 < 0.5):
+                self.iter = _
+                break
 
     def plot_figure(self, iter=1000):
-        self.t = np.linspace(0,self.tau*self.iter, num=iter)
-        plt.plot(self.t, self.Reward)
+        self.t = np.linspace(0,self.tau*self.iter, num=self.iter)
+        # self.Reward = slice(self.iter)
+        print(self.iter)
+        plt.plot(self.t, self.Reward[0:self.iter])
         plt.show()
+        self.X = self.X[0:self.iter]
         plt.plot(np.transpose(self.X)[0], np.transpose(self.X)[1],label='x-y')
-        circle1 = plt.Circle((self.obstcle_x, self.obstcle_y), self.r, color='r', fill=False)
-        ax = plt.gca()
-        ax.add_artist(circle1)
+        
+        if self.multi_ == True:
+            for i in range(len(self.R)):
+                circle1 = plt.Circle((self.Obstacle_X[i], self.Obstacle_Y[i]), self.R[i], color='r', fill=False)
+                ax = plt.gca()
+                ax.add_artist(circle1)
+        else:
+            circle1 = plt.Circle((self.obstcle_x, self.obstcle_y), self.r, color='r', fill=False)
+            ax = plt.gca()
+            ax.add_artist(circle1)
         plt.show()
         plt.plot(self.t, np.transpose(self.X)[2])
         plt.show()
 
 
 if __name__ == "__main__":
-    TIMESTEPS = 20   # T
-    N_SAMPLES = 200  # K
+    TIMESTEPS = 50   # T
+    N_SAMPLES = 500  # K
     ACTION_LOW = -10.0
     ACTION_HIGH = 10.0
 
-    noise_mu = 0
-    noise_sigma = 5
+    noise_mu = (0, 0)
+    noise_sigma = [[0.9, 0], [0, 0.9]]
     lambda_ = 1.0
-    iteration = 100
+    iteration = 500
 
     # U = np.random.uniform(low=ACTION_LOW, high=ACTION_HIGH, size=(TIMESTEPS,2))  # pendulum joint effort in (-2, +2)
     U = np.zeros((TIMESTEPS,2))

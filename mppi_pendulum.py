@@ -35,7 +35,7 @@ class MPPI():
     def _compute_total_cost(self, k):
         state = [0,0]
         state[:] = self.x_init[:]
-        use_cbf = False
+        use_cbf = True
         m,s = self.noise_mu, self.noise_sigma
         count = 0
         for t in range(self.T):
@@ -182,8 +182,8 @@ if __name__ == "__main__":
     ACTION_HIGH = 2.0
     length = 500
     noise_mu = 0
-    noise_sigma = 10
-    lambda_ = 0.0001
+    noise_sigma = 0.9
+    lambda_ = 1
 
     U = np.random.uniform(low=ACTION_LOW, high=ACTION_HIGH, size=TIMESTEPS)  # pendulum joint effort in (-2, +2)
 
