@@ -8,7 +8,7 @@ import cvxopt
 import time
 
 class MPPI():
-    def __init__(self, K, T, U, lambda_=1.0, noise_mu=0, noise_sigma=0.1, u_init=1, noise_gaussian=True, downward_start=True, iter=100):
+    def __init__(self, K, T, U, lambda_=1.0, noise_mu=0, noise_sigma=0.1, u_init=0, noise_gaussian=True, downward_start=True, iter=100):
         self.K = K  # N_SAMPLES
         self.T = T  # TIMESTEPS
         self.lambda_ = lambda_
@@ -39,7 +39,7 @@ class MPPI():
 
         self.use_cbf = False
         self.constraint_use = True
-        self.multi_ = True
+        self.multi_ = False
 
 
     def _compute_total_cost(self, k):
@@ -47,22 +47,22 @@ class MPPI():
         state[:] = self.x_init[:]
         m,s = self.noise_mu, self.noise_sigma
         for t in range(self.T):
-            
+            # if using cbf update the mean and variance
             if self.use_cbf == True:
                 m_,s_ = self.sdp_cbf(state,self.U[t], m,s)
                 m = m+m_.T
                 s += s_
                 self.noise[k, t, :] = np.random.multivariate_normal(m[0], s)
-
+            # The control input limit
             self.noise[k, t, 0] = np.clip(self.noise[k, t, 0], -self.max_speed-self.U[t][0], self.max_speed-self.U[t][0])
             self.noise[k, t, 1] = np.clip(self.noise[k, t, 1], -self.max_angle_speed-self.U[t][1], self.max_angle_speed-self.U[t][1])
             perturbed_action_t = self.U[t] + self.noise[k, t]
-            state,reward = self.dynamic(state, perturbed_action_t)
-            # print(self.U[t]@np.linalg.inv(s)@ self.noise[k,t].reshape(2,1))
-            self.cost_total[k] += reward + self.U[t] @ np.linalg.inv(s) @ self.noise[k,t].reshape(2,1)
+            state,reward = self.dynamic(state, perturbed_action_t)          #dynamic updates
+            
+            self.cost_total[k] += reward + self.U[t] @ np.linalg.inv(s) @ self.noise[k,t].reshape(2,1)          #Calculating the reward
         self.cost_total[k] += self.terminal_cost(state, perturbed_action_t)
 
-
+    # Terminal cost
     def terminal_cost(self, state, u):
         x = state[0]
         y = state[1]
@@ -70,16 +70,13 @@ class MPPI():
         x_des, y_des, theta_des = self.target[0], self.target[1], self.target[2]
         dist = (x - x_des)**2 + (y-y_des)**2
         r = 0
-        # if dist > 0.5:
-        #     r = 10
-        # else:
-        #     r = 0
         r += dist
         return r
 
     def angle_normalize(self,x):
         return (((x+np.pi) % (2*np.pi)) - np.pi)
 
+    # One obstacle reward
     def obstacle(self, x, y):
         dist = np.sqrt((x-self.obstcle_x)**2+(y-self.obstcle_y)**2)
         # dist = 2.0
@@ -89,12 +86,7 @@ class MPPI():
         else:
             return 0
 
-    def rectangular_obstacle(self, a, b, c, d, e, x, y):
-        if (a<x<b and 0<y<c) or (a<x<b and d<y<e):
-            return 1000
-        else:
-            return 0
-
+    # Multi obstacle reward
     def multi_obstacle(self, x, y):
         r = 0
         for i in range(len(self.Obstacle_X)):
@@ -103,8 +95,8 @@ class MPPI():
                 r += 1000
         return r
 
+    # System dynamic of unicycle, return new states and the costs
     def dynamic(self, state, u):
-        # print(state)True
         
         x = state[0]
         y = state[1]
@@ -122,7 +114,7 @@ class MPPI():
         newtheta = theta + self.tau * theta_dot
 
         state = [newx, newy, newtheta]
-        costs = (x_des - newx) ** 2 + (y_des - newy) ** 2 + 1*(self.v_desire-u[0])**2# +1* (theta_des - theta)**2 #+ 10*(self.w_desire-u[1])**2
+        costs = (x_des - newx) ** 2 + (y_des - newy) ** 2 + 1*(self.v_desire-u[0])**2
 
         if self.constraint_use == True:
             costs += self.obstacle(newx, newy)
@@ -148,7 +140,6 @@ class MPPI():
         solvers.options['show_progress'] = False
         sol = solvers.qp(P,q,-g,h)
         u_cbf = np.array(sol['x'])
-        # u_cbf = self.qp_solver(-g,h)
         return u_cbf
 
     def sdp_cbf(self, state, u_norminal, mu, sigma):
@@ -166,9 +157,7 @@ class MPPI():
                 # print(A_[i],partial_hx * g_x)
                 A_[i] = partial_hx * g_x
                 C = matrix(A_[i], (2,1))
-                
                 B[i] = -matrix(alpha * h_x**3) - A_[i] @ matrix(u_norminal)
-                # print('1', C, A_[0],B[i])
             variance = cp.Variable((2, 2), PSD=True)
             mean = cp.Variable((2, 1))
             constraints = [matrix(A_[0],(1,2)) @ variance @ matrix(A_[0],(2,1))+ A_[0] @ mean >> B[0],\
@@ -229,13 +218,9 @@ class MPPI():
             omega = (1/eta) * cost_total_non_zero
 
             D_u = np.zeros((self.T,2))
-            # print(np.shape(omega.T), np.shape(self.noise),np.shape(self.U))
-            # print(self.cost_total)
-            # print(omega)
             for t in range(self.T):
                 # print(np.shape(omega),t)
                 delta_U = np.matmul(omega.reshape((1,self.K)),self.noise[:, t])
-                # delta_U = np.sum(self.noise[:, t].T * omega)
                 D_u[t]=delta_U
             self.U += D_u
 
@@ -251,11 +236,13 @@ class MPPI():
             #Save data for plotting
             self.X[_] = np.transpose(self.x_init)
             self.Reward[_] = r
-            # print(_)
+            
+            #if the distance is close to the target jump out the loop
             if ((self.x_init[0]-self.target[0])**2 + (self.x_init[1]-self.target[1])**2 < 0.5):
                 self.iter = _
                 break
 
+    # Plot the figures
     def plot_figure(self, iter=1000):
         self.t = np.linspace(0,self.tau*self.iter, num=self.iter)
         # self.Reward = slice(self.iter)
@@ -286,14 +273,13 @@ if __name__ == "__main__":
     ACTION_HIGH = 10.0
 
     noise_mu = (0, 0)
-    noise_sigma = [[0.9, 0], [0, 0.9]]
-    lambda_ = 1.0
+    noise_sigma = [[1.0, 0], [0, 1.0]]
+    lambda_ = 0.01
     iteration = 500
 
-    # U = np.random.uniform(low=ACTION_LOW, high=ACTION_HIGH, size=(TIMESTEPS,2))  # pendulum joint effort in (-2, +2)
     U = np.zeros((TIMESTEPS,2))
     U.T[:1] = 2.5
     # print(U)
-    mppi_gym = MPPI(K=N_SAMPLES, T=TIMESTEPS, U=U, lambda_=lambda_, noise_mu=noise_mu, noise_sigma=noise_sigma, u_init=0, noise_gaussian=True,iter=iteration)
-    mppi_gym.control(iter=iteration)
-    mppi_gym.plot_figure(iter=iteration)
+    mppi_unicycle = MPPI(K=N_SAMPLES, T=TIMESTEPS, U=U, lambda_=lambda_, noise_mu=noise_mu, noise_sigma=noise_sigma, u_init=0, noise_gaussian=True,iter=iteration)
+    mppi_unicycle.control(iter=iteration)
+    mppi_unicycle.plot_figure(iter=iteration)
