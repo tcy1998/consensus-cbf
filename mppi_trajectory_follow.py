@@ -8,7 +8,7 @@ import cvxopt
 import time
 
 class MPPI():
-    def __init__(self, K, T, U, lambda_=1.0, noise_mu=0, noise_sigma=0.1, u_init=0, noise_gaussian=True, downward_start=True, iter=100):
+    def __init__(self, K, T, U, lambda_=1.0, noise_mu=0, noise_sigma=0.1, u_init=2.0, noise_gaussian=True, downward_start=True, iter=100):
         self.K = K  # N_SAMPLES
         self.T = T  # TIMESTEPS
         self.lambda_ = lambda_
@@ -22,24 +22,24 @@ class MPPI():
         self.x_init = [0, 0, np.pi/4]
         self.t_init = 0
         self.target = [4,4,np.pi/4]
-        self.v_desire = 0.0 #0.25*np.sqrt(2)
+        self.v_desire = 0.25*np.sqrt(2)
         self.w_desire = 0.0
         self.X, self.Reward = np.zeros(shape=(iter,3)),np.zeros(shape=(iter))
         self.iter = iter
-        self.max_speed = 2.0
-        self.max_angle_speed = 2.0
+        self.max_speed = 5.0
+        self.max_angle_speed = 0.5
 
         self.obstcle_x = 1.5
         self.obstcle_y = 1.0
-        self.r =1.0
+        self.r =0.5
 
         self.Obstacle_X = matrix([1, 1, 3])
         self.Obstacle_Y = matrix([1, 3, 1.5])
         self.R = matrix([0.5, 1.25, 0.75])
 
-        self.use_cbf = False
-        self.constraint_use = True
-        self.multi_ = False
+        self.use_cbf = False            #use cbf
+        self.constraint_use = False      #one obstacle 
+        self.multi_ = False             #multi obstacles
 
 
     def _compute_total_cost(self, k):
@@ -60,7 +60,7 @@ class MPPI():
             state,reward = self.dynamic(state, perturbed_action_t)          #dynamic updates
             
             self.cost_total[k] += reward + self.U[t] @ np.linalg.inv(s) @ self.noise[k,t].reshape(2,1)          #Calculating the reward
-        self.cost_total[k] += self.terminal_cost(state, perturbed_action_t)
+        # self.cost_total[k] += self.terminal_cost(state, perturbed_action_t)
 
     # Terminal cost
     def terminal_cost(self, state, u):
@@ -82,7 +82,7 @@ class MPPI():
         # dist = 2.0
         # r = 0.5
         if dist < self.r:
-            return 1000
+            return 100
         else:
             return 0
 
@@ -268,18 +268,18 @@ class MPPI():
 
 if __name__ == "__main__":
     TIMESTEPS = 50   # T
-    N_SAMPLES = 500  # K
+    N_SAMPLES = 200  # K
     ACTION_LOW = -10.0
     ACTION_HIGH = 10.0
 
     noise_mu = (0, 0)
     noise_sigma = [[1.0, 0], [0, 1.0]]
-    lambda_ = 0.01
+    lambda_ = 0.1
     iteration = 500
 
     U = np.zeros((TIMESTEPS,2))
     U.T[:1] = 2.5
     # print(U)
-    mppi_unicycle = MPPI(K=N_SAMPLES, T=TIMESTEPS, U=U, lambda_=lambda_, noise_mu=noise_mu, noise_sigma=noise_sigma, u_init=0, noise_gaussian=True,iter=iteration)
+    mppi_unicycle = MPPI(K=N_SAMPLES, T=TIMESTEPS, U=U, lambda_=lambda_, noise_mu=noise_mu, noise_sigma=noise_sigma, u_init=2.5, noise_gaussian=True,iter=iteration)
     mppi_unicycle.control(iter=iteration)
     mppi_unicycle.plot_figure(iter=iteration)

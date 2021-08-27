@@ -249,36 +249,36 @@ def main():
 
     print(Trajectory["true1"])
 
-    # plt.plot(T_2, np.transpose(Leader_control_input)[0])
-    # plt.plot(T_2, np.transpose(Follower1_control_input)[0])
-    # plt.plot(T_2, np.transpose(Follower2_control_input)[0])
-    # plt.title('control_input')
-    # plt.show()
+    plt.plot(T_2, np.transpose(Leader_control_input)[0])
+    plt.plot(T_2, np.transpose(Follower1_control_input)[0])
+    plt.plot(T_2, np.transpose(Follower2_control_input)[0])
+    plt.title('control_input')
+    plt.show()
 
-    # Error = Leader_virtual_target-Leader_true_x
-    # plt.plot(T_1, np.transpose(Error)[0])
-    # plt.plot(T_1, np.transpose(Error)[1])
-    # plt.show()
+    Error = Leader_virtual_target-Leader_true_x
+    plt.plot(T_1, np.transpose(Error)[0])
+    plt.plot(T_1, np.transpose(Error)[1])
+    plt.show()
 
-    # Distance1 = (np.transpose(Leader_true_x)[0]-np.transpose(Follower1_true_x)[0])**2 + (np.transpose(Leader_true_x)[1]-np.transpose(Follower1_true_x)[1])**2
-    # Distance2 = (np.transpose(Leader_true_x)[0]-np.transpose(Follower2_true_x)[0])**2 + (np.transpose(Leader_true_x)[1]-np.transpose(Follower2_true_x)[1])**2
-    # Distance3 = (np.transpose(Follower2_true_x)[0]-np.transpose(Follower1_true_x)[0])**2 + (np.transpose(Follower2_true_x)[1]-np.transpose(Follower1_true_x)[1])**2
-    # plt.plot(T_1, Distance1, label='distance1')
-    # plt.plot(T_1, Distance2, label='distance2')
-    # # plt.plot(T_1, Distance3, label='distance3')
-    # plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0.)
-    # plt.axhline(y=safe_distance**2, color='r', linestyle='-')
-    # plt.show()
+    Distance1 = (np.transpose(Leader_true_x)[0]-np.transpose(Follower1_true_x)[0])**2 + (np.transpose(Leader_true_x)[1]-np.transpose(Follower1_true_x)[1])**2
+    Distance2 = (np.transpose(Leader_true_x)[0]-np.transpose(Follower2_true_x)[0])**2 + (np.transpose(Leader_true_x)[1]-np.transpose(Follower2_true_x)[1])**2
+    Distance3 = (np.transpose(Follower2_true_x)[0]-np.transpose(Follower1_true_x)[0])**2 + (np.transpose(Follower2_true_x)[1]-np.transpose(Follower1_true_x)[1])**2
+    plt.plot(T_1, Distance1, label='distance1')
+    plt.plot(T_1, Distance2, label='distance2')
+    # plt.plot(T_1, Distance3, label='distance3')
+    plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0.)
+    plt.axhline(y=safe_distance**2, color='r', linestyle='-')
+    plt.show()
 
-    # fig = plt.figure()
-    # ax = fig.add_subplot(111)
-    # plt.plot(np.transpose(Leader_virtual_target)[0], np.transpose(Leader_virtual_target)[1])
-    # plt.plot(np.transpose(Leader_true_x)[0], np.transpose(Leader_true_x)[1])
-    # plt.plot(np.transpose(Follower1_virtual_target)[0], np.transpose(Follower1_virtual_target)[1])
-    # plt.plot(np.transpose(Follower1_true_x)[0], np.transpose(Follower1_true_x)[1])
-    # plt.plot(np.transpose(Follower2_virtual_target)[0], np.transpose(Follower2_virtual_target)[1])
-    # plt.plot(np.transpose(Follower2_true_x)[0], np.transpose(Follower2_true_x)[1])
-    # plt.show()
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    plt.plot(np.transpose(Leader_virtual_target)[0], np.transpose(Leader_virtual_target)[1])
+    plt.plot(np.transpose(Leader_true_x)[0], np.transpose(Leader_true_x)[1])
+    plt.plot(np.transpose(Follower1_virtual_target)[0], np.transpose(Follower1_virtual_target)[1])
+    plt.plot(np.transpose(Follower1_true_x)[0], np.transpose(Follower1_true_x)[1])
+    plt.plot(np.transpose(Follower2_virtual_target)[0], np.transpose(Follower2_virtual_target)[1])
+    plt.plot(np.transpose(Follower2_true_x)[0], np.transpose(Follower2_true_x)[1])
+    plt.show()
     
 main()
 

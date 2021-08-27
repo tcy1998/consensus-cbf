@@ -159,7 +159,7 @@ def main():
 
     Use_cbf = True
     use_to_the_end = False
-    safe_distance = 0.9
+    safe_distance = 0.2
     u_leader_old, u_follower1_old, u_follower2_old = np.array([[0],[0]]), np.array([[0],[0]]), np.array([[0],[0]])
 
     cbf_Leader_true_x, cbf_Leader_control_input = np.zeros(shape=(time_step+1,3)), np.zeros(shape=(time_step+1,2))
@@ -353,8 +353,8 @@ def main():
     plt.plot(np.transpose(Follower1_true_x)[0], np.transpose(Follower1_true_x)[1])
     plt.plot(np.transpose(Follower2_virtual_target)[0], np.transpose(Follower2_virtual_target)[1])
     plt.plot(np.transpose(Follower2_true_x)[0], np.transpose(Follower2_true_x)[1])
-    rec1 = matplotlib.patches.Rectangle((1.5,-2),2,3,color='black')             # plot the building
-    rec2 = matplotlib.patches.Rectangle((6.5,-1),2,3,color='black')
+    rec1 = matplotlib.patches.Circle((2.5,0),1,color='black')             # plot the building
+    rec2 = matplotlib.patches.Circle((7.5,0),1,color='black')
     ax.add_patch(rec1)
     ax.add_patch(rec2)
     plt.show()
@@ -402,6 +402,20 @@ def main():
         plt.plot(T_1, cbf_Distance3, label='distance3')
         plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0.)
         plt.axhline(y=safe_distance**2, color='r', linestyle='-')
+        plt.show()
+
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+        plt.plot(np.transpose(Leader_virtual_target)[0], np.transpose(Leader_virtual_target)[1])
+        plt.plot(np.transpose(cbf_Leader_true_x)[0], np.transpose(cbf_Leader_true_x)[1])
+        plt.plot(np.transpose(Follower1_virtual_target)[0], np.transpose(Follower1_virtual_target)[1])
+        plt.plot(np.transpose(cbf_Follower1_true_x)[0], np.transpose(cbf_Follower1_true_x)[1])
+        plt.plot(np.transpose(Follower2_virtual_target)[0], np.transpose(Follower2_virtual_target)[1])
+        plt.plot(np.transpose(cbf_Follower2_true_x)[0], np.transpose(cbf_Follower2_true_x)[1])
+        rec1 = matplotlib.patches.Circle((2.5,0),1,color='black')             # plot the building
+        rec2 = matplotlib.patches.Circle((7.5,0),1,color='black')
+        ax.add_patch(rec1)
+        ax.add_patch(rec2)
         plt.show()
  
 

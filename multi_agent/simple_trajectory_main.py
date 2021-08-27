@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import copy
 import matplotlib
-matplotlib.use('Agg')
+# matplotlib.use('Agg')
 from cvxopt import matrix, solvers
 import matplotlib.animation as animation
 from matplotlib.animation import FuncAnimation, PillowWriter 
@@ -59,15 +59,15 @@ def g_id_follower2(x):      #the trajectory of the follower 2
     return target
 
 # def g_id_leader(x):         # the trajectory of the leader
-#     target = np.array([[12.0*x], [0.0],[0.0]])           ##desire x,y,theta theta is in radius
+#     target = np.array([[0,0], [0.0],[0.0]])           ##desire x,y,theta theta is in radius
 #     return target
     
 # def g_id_follower1(x):      #the trajectory of the follower 1
-#     target = np.array([[12.0*x], [12.0*x-6],[np.pi/4]])
+#     target = np.array([[-4.0], [3.0],[np.pi/4]])
 #     return target
 
 # def g_id_follower2(x):      #the trajectory of the follower 2 
-#     target = np.array([[12.0*x], [6.0-12.0*x],[-np.pi/4]])
+#     target = np.array([[-6.0], [0.0],[-np.pi/4]])
 #     return target
 
 def dynamic(true_position, control_input, time_step_size, disturbance=True):
@@ -158,7 +158,7 @@ def main():
     Follower1_virtual_target[0], Follower1_true_x[0] = follower1_true_x.T, follower1_true_x.T
     Follower2_virtual_target[0], Follower2_true_x[0] = follower2_true_x.T, follower2_true_x.T
 
-    Use_cbf = False
+    Use_cbf = True
     use_to_the_end = False
     Use_feedback = False
     safe_distance = 3.0
@@ -293,11 +293,11 @@ def main():
         traj6.set_data(plot_for_anim_follower2_target[0][:i+1], plot_for_anim_follower2_target[1][:i+1])
         return line1,traj1,line2,traj2,line3,traj3,line4,traj4,line5,traj5,line6,traj6,
     anim = animation.FuncAnimation(fig1, animate, frames=time_step_1+1, interval=20, blit=True)
-    # plt.draw()
-    # plt.show()
+    plt.draw()
+    plt.show()
 
-    writer = PillowWriter(fps=25)  
-    anim.save("demo_sine.mp4", writer=writer) 
+    # writer = PillowWriter(fps=25)  
+    # anim.save("demo_sine.mp4", writer=writer) 
 
     plt.plot(T, np.transpose(X)[0] - np.transpose(X)[1])
     plt.plot(T, np.transpose(X)[0] - np.transpose(X)[2])

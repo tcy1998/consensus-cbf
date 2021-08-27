@@ -183,7 +183,7 @@ def main():
     Use_cbf = True
     use_to_the_end = False
     Use_feedback = True
-    safe_distance = 1.1
+    safe_distance = 1.0
     u_leader_old, u_follower1_old, u_follower2_old = np.array([[0],[0]]), np.array([[0],[0]]), np.array([[0],[0]])
     Error_all = np.array([[0],[0],[0]])
     k_e = 0.5
@@ -361,8 +361,8 @@ def main():
     plt.plot(np.transpose(Follower1_true_x)[0], np.transpose(Follower1_true_x)[1])
     plt.plot(np.transpose(Follower2_virtual_target)[0], np.transpose(Follower2_virtual_target)[1])
     plt.plot(np.transpose(Follower2_true_x)[0], np.transpose(Follower2_true_x)[1])
-    rec1 = matplotlib.patches.Rectangle((1.5,-2),2,3,color='black')             # plot the building
-    rec2 = matplotlib.patches.Rectangle((6.5,-1),2,3,color='black')
+    rec1 = matplotlib.patches.Circle((2.5,0),1.0,color='black')             # plot the building
+    rec2 = matplotlib.patches.Circle((7.5,0),1.0,color='black')
     ax.add_patch(rec1)
     ax.add_patch(rec2)
     plt.show()
