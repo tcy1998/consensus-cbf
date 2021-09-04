@@ -19,6 +19,8 @@ class MPPI():
         self.cost_total = np.zeros(shape=(self.K))
         self.tau = 0.05
 
+
+        # target parameters
         self.x_init = [0, 0, np.pi/4]
         self.t_init = 0
         self.target = [4,4,np.pi/4]
@@ -29,6 +31,8 @@ class MPPI():
         self.max_speed = 5.0
         self.max_angle_speed = 0.5
 
+
+        # Obstacle parameters
         self.obstcle_x = 1.5
         self.obstcle_y = 1.0
         self.r =0.5
@@ -49,13 +53,13 @@ class MPPI():
         for t in range(self.T):
             # if using cbf update the mean and variance
             if self.use_cbf == True:
-                m_,s_ = self.sdp_cbf(state,self.U[t], m,s)
+                m_,s_ = self.sdp_cbf(state,self.U[t], m,s)  #Using function to return new safe and mean variance
                 m = m+m_.T
                 s += s_
                 self.noise[k, t, :] = np.random.multivariate_normal(m[0], s)
-            # The control input limit
-            self.noise[k, t, 0] = np.clip(self.noise[k, t, 0], -self.max_speed-self.U[t][0], self.max_speed-self.U[t][0])
-            self.noise[k, t, 1] = np.clip(self.noise[k, t, 1], -self.max_angle_speed-self.U[t][1], self.max_angle_speed-self.U[t][1])
+            
+            self.noise[k, t, 0] = np.clip(self.noise[k, t, 0], -self.max_speed-self.U[t][0], self.max_speed-self.U[t][0])   # Speed limit
+            self.noise[k, t, 1] = np.clip(self.noise[k, t, 1], -self.max_angle_speed-self.U[t][1], self.max_angle_speed-self.U[t][1])   #Angular speed limit
             perturbed_action_t = self.U[t] + self.noise[k, t]
             state,reward = self.dynamic(state, perturbed_action_t)          #dynamic updates
             
@@ -72,7 +76,8 @@ class MPPI():
         r = 0
         r += dist
         return r
-
+    
+    # Angle normalize
     def angle_normalize(self,x):
         return (((x+np.pi) % (2*np.pi)) - np.pi)
 
@@ -193,6 +198,8 @@ class MPPI():
 
         return mean.value, variance.value
 
+
+    # Self writing qp solver only usable for simple QP problem
     def qp_solver(self,g,h):
         g_1 = g[0]
         g_2 = g[1]
