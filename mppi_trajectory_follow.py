@@ -8,7 +8,7 @@ import cvxopt
 import time
 
 class MPPI():
-    def __init__(self, K, T, U, lambda_=1.0, noise_mu=0, noise_sigma=0.1, u_init=2.0, noise_gaussian=True, downward_start=True, iter=100):
+    def __init__(self, K, T, U, lambda_=1.0, noise_mu=0, noise_sigma=0.1, u_init=2.5, noise_gaussian=True, downward_start=True, iter=100):
         self.K = K  # N_SAMPLES
         self.T = T  # TIMESTEPS
         self.lambda_ = lambda_
@@ -24,33 +24,40 @@ class MPPI():
         self.x_init = [0, 0, np.pi/4]
         self.t_init = 0
         self.target = [4,4,np.pi/4]
-        self.v_desire = 0.25*np.sqrt(2)
-        self.w_desire = 0.0
+        self.v_desire = 0.04*np.sqrt(2)
+        # self.w_desire = 0.0
         self.X, self.Reward = np.zeros(shape=(iter,3)),np.zeros(shape=(iter))
         self.iter = iter
-        self.max_speed = 5.0
-        self.max_angle_speed = 0.5
+        self.max_speed = 10.0
+        self.max_angle_speed = 10.0
 
 
         # Obstacle parameters
-        self.obstcle_x = 1.5
-        self.obstcle_y = 1.0
+        self.obstcle_x = 2.2
+        self.obstcle_y = 2.0
         self.r =0.5
 
         self.Obstacle_X = matrix([1, 1, 3])
         self.Obstacle_Y = matrix([1, 3, 1.5])
         self.R = matrix([0.5, 1.25, 0.75])
 
-        self.use_cbf = False            #use cbf
+        self.use_cbf = True            #use cbf
         self.constraint_use = False      #one obstacle 
         self.multi_ = False             #multi obstacles
 
+        self.plot_sample = True         #plot sample trajectory
+        self.sample_data = np.zeros((self.K,self.T,3))
+        self.plot_sample_time = 4
 
-    def _compute_total_cost(self, k):
+
+    def _compute_total_cost(self, k, time_step):
         state = [0,0,0]
         state[:] = self.x_init[:]
         m,s = self.noise_mu, self.noise_sigma
         for t in range(self.T):
+            # print(state, t)
+            if time_step == self.plot_sample_time:
+                self.sample_data[k, t, :] = state
             # if using cbf update the mean and variance
             if self.use_cbf == True:
                 m_,s_ = self.sdp_cbf(state,self.U[t], m,s)  #Using function to return new safe and mean variance
@@ -64,7 +71,7 @@ class MPPI():
             state,reward = self.dynamic(state, perturbed_action_t)          #dynamic updates
             
             self.cost_total[k] += reward + self.U[t] @ np.linalg.inv(s) @ self.noise[k,t].reshape(2,1)          #Calculating the reward
-        # self.cost_total[k] += self.terminal_cost(state, perturbed_action_t)
+        self.cost_total[k] += self.terminal_cost(state, perturbed_action_t)
 
     # Terminal cost
     def terminal_cost(self, state, u):
@@ -76,18 +83,13 @@ class MPPI():
         r = 0
         r += dist
         return r
-    
-    # Angle normalize
-    def angle_normalize(self,x):
-        return (((x+np.pi) % (2*np.pi)) - np.pi)
 
     # One obstacle reward
     def obstacle(self, x, y):
         dist = np.sqrt((x-self.obstcle_x)**2+(y-self.obstcle_y)**2)
-        # dist = 2.0
-        # r = 0.5
+
         if dist < self.r:
-            return 100
+            return 10000
         else:
             return 0
 
@@ -119,7 +121,7 @@ class MPPI():
         newtheta = theta + self.tau * theta_dot
 
         state = [newx, newy, newtheta]
-        costs = (x_des - newx) ** 2 + (y_des - newy) ** 2 + 1*(self.v_desire-u[0])**2
+        costs = 1000*(x_des - newx) ** 2 + 1000* (y_des - newy) ** 2 + 1*(self.v_desire-u[0])**2
 
         if self.constraint_use == True:
             costs += self.obstacle(newx, newy)
@@ -138,7 +140,7 @@ class MPPI():
         partial_hx = matrix([2*(position_x - self.obstcle_x), 2*(position_y - self.obstcle_y), 0], (1,3))
         g = partial_hx * g_x
         h = matrix(alpha * h_x**3) + g * matrix(u_norminal)
-        # print(alpha * h_x ** 3,g * matrix(u_norminal))
+
         P = matrix([[1.0,0.0],[0.0,1.0]])
         q = matrix([0.0,0.0])
 
@@ -216,7 +218,7 @@ class MPPI():
         for _ in range(iter):
             self.noise = np.random.multivariate_normal(self.noise_mu, self.noise_sigma, size=(self.K, self.T))
             for k in range(self.K):
-                self._compute_total_cost(k)
+                self._compute_total_cost(k, _)
             
             beta = np.min(self.cost_total)  # minimum cost of all trajectories
             cost_total_non_zero = self._ensure_non_zero(cost=self.cost_total, beta=beta, factor=1/self.lambda_)
@@ -231,10 +233,9 @@ class MPPI():
                 D_u[t]=delta_U
             self.U += D_u
 
-            print(self.U[0])
             s,r1 = self.dynamic(self.x_init,self.U[0])
             r = self.terminal_cost(s, self.U[0])
-            self.U = np.roll(self.U, -1)  # shift all elements to the left          
+            self.U = np.roll(self.U, -2)  # shift all elements to the left          
             self.U[-1] = self.u_init  #
             self.cost_total[:] = 0
             self.x_init = s
@@ -243,16 +244,15 @@ class MPPI():
             #Save data for plotting
             self.X[_] = np.transpose(self.x_init)
             self.Reward[_] = r
-            
+
             #if the distance is close to the target jump out the loop
-            if ((self.x_init[0]-self.target[0])**2 + (self.x_init[1]-self.target[1])**2 < 0.5):
+            if ((self.x_init[0]-self.target[0])**2 + (self.x_init[1]-self.target[1])**2 < 0.09):
                 self.iter = _
                 break
 
     # Plot the figures
     def plot_figure(self, iter=1000):
         self.t = np.linspace(0,self.tau*self.iter, num=self.iter)
-        # self.Reward = slice(self.iter)
         print(self.iter)
         plt.plot(self.t, self.Reward[0:self.iter])
         plt.show()
@@ -268,21 +268,33 @@ class MPPI():
             circle1 = plt.Circle((self.obstcle_x, self.obstcle_y), self.r, color='r', fill=False)
             ax = plt.gca()
             ax.add_artist(circle1)
+        plt.xlim([0,5])
         plt.show()
         plt.plot(self.t, np.transpose(self.X)[2])
         plt.show()
 
+        if self.plot_sample == True:
+            print(np.size(self.sample_data))
+            for i in range(len(self.sample_data)):
+                plt.plot(np.transpose(self.sample_data[i])[0], np.transpose(self.sample_data[i])[1])
+            circle1 = plt.Circle((self.obstcle_x, self.obstcle_y), self.r, color='r', fill=False)
+            ax = plt.gca()
+            ax.add_artist(circle1)
+            plt.xlim([1,4])
+            plt.ylim([1,4])
+            plt.show()
+
 
 if __name__ == "__main__":
-    TIMESTEPS = 50   # T
+    TIMESTEPS = 10  # T
     N_SAMPLES = 200  # K
     ACTION_LOW = -10.0
     ACTION_HIGH = 10.0
 
     noise_mu = (0, 0)
-    noise_sigma = [[1.0, 0], [0, 1.0]]
+    noise_sigma = [[1, 0], [0, 1]]
     lambda_ = 0.1
-    iteration = 500
+    iteration = 250
 
     U = np.zeros((TIMESTEPS,2))
     U.T[:1] = 2.5
