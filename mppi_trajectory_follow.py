@@ -43,11 +43,11 @@ class MPPI():
 
         self.use_cbf = True            #use cbf
         self.constraint_use = False      #one obstacle 
-        self.multi_ = False             #multi obstacles
+        self.multi_ = True             #multi obstacles
 
         self.plot_sample = True         #plot sample trajectory
         self.sample_data = np.zeros((self.K,self.T,3))
-        self.plot_sample_time = 4
+        self.plot_sample_time = 7
 
 
     def _compute_total_cost(self, k, time_step):
@@ -167,6 +167,7 @@ class MPPI():
                 B[i] = -matrix(alpha * h_x**3) - A_[i] @ matrix(u_norminal)
             variance = cp.Variable((2, 2), PSD=True)
             mean = cp.Variable((2, 1))
+            print(A_)
             constraints = [matrix(A_[0],(1,2)) @ variance @ matrix(A_[0],(2,1))+ A_[0] @ mean >> B[0],\
                 matrix(A_[1],(1,2)) @ variance @ matrix(A_[1],(2,1))+ A_[1] @ mean >> B[1],\
                 matrix(A_[2],(1,2)) @ variance @ matrix(A_[2],(2,1))+ A_[2] @ mean >> B[2],
