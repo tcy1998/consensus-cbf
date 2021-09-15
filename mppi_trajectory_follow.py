@@ -28,7 +28,7 @@ class MPPI():
         # self.w_desire = 0.0
         self.X, self.Reward = np.zeros(shape=(iter,3)),np.zeros(shape=(iter))
         self.iter = iter
-        self.max_speed = 10.0
+        self.max_speed = 5.0
         self.max_angle_speed = 10.0
 
 
@@ -37,9 +37,9 @@ class MPPI():
         self.obstcle_y = 2.0
         self.r =0.5
 
-        self.Obstacle_X = matrix([1, 1, 3])
-        self.Obstacle_Y = matrix([1, 3, 1.5])
-        self.R = matrix([0.5, 1.25, 0.75])
+        self.Obstacle_X = matrix([1.5, 1, 3])
+        self.Obstacle_Y = matrix([0.5, 3, 2])
+        self.R = matrix([0.5, 1.5, 0.5])
 
         self.use_cbf = True            #use cbf
         self.constraint_use = False      #one obstacle 
@@ -99,7 +99,7 @@ class MPPI():
         for i in range(len(self.Obstacle_X)):
             dist = np.sqrt((x-self.Obstacle_X[i])**2+(y-self.Obstacle_Y[i])**2)
             if dist < self.R[i]:
-                r += 1000
+                r += 10000
         return r
 
     # System dynamic of unicycle, return new states and the costs
@@ -167,7 +167,7 @@ class MPPI():
                 B[i] = -matrix(alpha * h_x**3) - A_[i] @ matrix(u_norminal)
             variance = cp.Variable((2, 2), PSD=True)
             mean = cp.Variable((2, 1))
-            print(A_)
+            # print(A_)
             constraints = [matrix(A_[0],(1,2)) @ variance @ matrix(A_[0],(2,1))+ A_[0] @ mean >> B[0],\
                 matrix(A_[1],(1,2)) @ variance @ matrix(A_[1],(2,1))+ A_[1] @ mean >> B[1],\
                 matrix(A_[2],(1,2)) @ variance @ matrix(A_[2],(2,1))+ A_[2] @ mean >> B[2],
@@ -275,20 +275,23 @@ class MPPI():
         plt.show()
 
         if self.plot_sample == True:
-            print(np.size(self.sample_data))
-            for i in range(len(self.sample_data)):
-                plt.plot(np.transpose(self.sample_data[i])[0], np.transpose(self.sample_data[i])[1])
-            circle1 = plt.Circle((self.obstcle_x, self.obstcle_y), self.r, color='r', fill=False)
-            ax = plt.gca()
-            ax.add_artist(circle1)
-            plt.xlim([1,4])
-            plt.ylim([1,4])
-            plt.show()
+            if self.multi_ == False:
+                print(np.size(self.sample_data))
+                for i in range(len(self.sample_data)):
+                    plt.plot(np.transpose(self.sample_data[i])[0], np.transpose(self.sample_data[i])[1])
+                circle1 = plt.Circle((self.obstcle_x, self.obstcle_y), self.r, color='r', fill=False)
+                ax = plt.gca()
+                ax.add_artist(circle1)
+                plt.xlim([1,4])
+                plt.ylim([1,4])
+                plt.show()
+            else:
+                print(np.size(self.sample_data))
 
 
 if __name__ == "__main__":
-    TIMESTEPS = 10  # T
-    N_SAMPLES = 200  # K
+    TIMESTEPS = 20  # T
+    N_SAMPLES = 100  # K
     ACTION_LOW = -10.0
     ACTION_HIGH = 10.0
 
