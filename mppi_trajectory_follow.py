@@ -59,11 +59,15 @@ class MPPI():
             if time_step == self.plot_sample_time:
                 self.sample_data[k, t, :] = state
             # if using cbf update the mean and variance
+            # print(m,s)
             if self.use_cbf == True:
                 m_,s_ = self.sdp_cbf(state,self.U[t], m,s)  #Using function to return new safe and mean variance
-                m = m+m_.T
+                # print(m_, s_)
+                m = m+m_.reshape(1,2)
                 s += s_
-                self.noise[k, t, :] = np.random.multivariate_normal(m[0], s)
+                # print(m,s)
+                # print(m[0], s, np.random.multivariate_normal(m[0], s))
+                self.noise[k, t, :] = np.random.multivariate_normal(m[0], s)    #m[0] is because will become a nested array
             
             self.noise[k, t, 0] = np.clip(self.noise[k, t, 0], -self.max_speed-self.U[t][0], self.max_speed-self.U[t][0])   # Speed limit
             self.noise[k, t, 1] = np.clip(self.noise[k, t, 1], -self.max_angle_speed-self.U[t][1], self.max_angle_speed-self.U[t][1])   #Angular speed limit
@@ -161,13 +165,11 @@ class MPPI():
                 h_x = (position_x - self.Obstacle_X[i])**2 + (position_y - self.Obstacle_Y[i])**2 - self.R[i] **2
                 g_x = matrix([[np.cos(theta), 0], [np.sin(theta), 0], [0, 1]], (3,2))
                 partial_hx = matrix([2*(position_x - self.Obstacle_X[i]), 2*(position_y - self.Obstacle_Y[i]), 0.0], (1,3))
-                # print(A_[i],partial_hx * g_x)
                 A_[i] = partial_hx * g_x
                 C = matrix(A_[i], (2,1))
                 B[i] = -matrix(alpha * h_x**3) - A_[i] @ matrix(u_norminal)
             variance = cp.Variable((2, 2), PSD=True)
             mean = cp.Variable((2, 1))
-            # print(A_)
             constraints = [matrix(A_[0],(1,2)) @ variance @ matrix(A_[0],(2,1))+ A_[0] @ mean >> B[0],\
                 matrix(A_[1],(1,2)) @ variance @ matrix(A_[1],(2,1))+ A_[1] @ mean >> B[1],\
                 matrix(A_[2],(1,2)) @ variance @ matrix(A_[2],(2,1))+ A_[2] @ mean >> B[2],
