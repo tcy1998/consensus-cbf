@@ -125,7 +125,7 @@ class MPPI():
         newtheta = theta + self.tau * theta_dot
 
         state = [newx, newy, newtheta]
-        costs = 1000*(x_des - newx) ** 2 + 1000* (y_des - newy) ** 2 + 1*(self.v_desire-u[0])**2
+        costs = 10*(x_des - newx) ** 2 + 10* (y_des - newy) ** 2 + 1*(self.v_desire-u[0])**2
 
         if self.constraint_use == True:
             costs += self.obstacle(newx, newy)
