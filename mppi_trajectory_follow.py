@@ -6,6 +6,7 @@ import cvxpy as cp
 import numpy as np
 import cvxopt
 import time
+from numpy import savetxt
 
 class MPPI():
     def __init__(self, K, T, U, lambda_=1.0, noise_mu=0, noise_sigma=0.1, u_init=2.5, noise_gaussian=True, downward_start=True, iter=100):
@@ -41,13 +42,15 @@ class MPPI():
         self.Obstacle_Y = matrix([0.5, 3, 2])
         self.R = matrix([0.5, 1.5, 0.5])
 
-        self.use_cbf = True            #use cbf
-        self.constraint_use = False      #one obstacle 
-        self.multi_ = True             #multi obstacles
+        self.use_cbf = False            #use cbf
+        self.constraint_use = True      #one obstacle 
+        self.multi_ = False             #multi obstacles
 
         self.plot_sample = True         #plot sample trajectory
         self.sample_data = np.zeros((self.K,self.T,3))
         self.plot_sample_time = 7
+
+        self.save_data = True
 
 
     def _compute_total_cost(self, k, time_step):
@@ -249,7 +252,7 @@ class MPPI():
             self.Reward[_] = r
 
             #if the distance is close to the target jump out the loop
-            if ((self.x_init[0]-self.target[0])**2 + (self.x_init[1]-self.target[1])**2 < 0.09):
+            if ((self.x_init[0]-self.target[0])**2 + (self.x_init[1]-self.target[1])**2 < 0.04):
                 self.iter = _
                 break
 
@@ -261,6 +264,9 @@ class MPPI():
         plt.show()
         self.X = self.X[0:self.iter]
         plt.plot(np.transpose(self.X)[0], np.transpose(self.X)[1],label='x-y')
+        target_circle = plt.Circle((self.target[0], self.target[1]), 0.2, color='b', fill=False)
+        ax = plt.gca()
+        ax.add_artist(target_circle)
         
         if self.multi_ == True:
             for i in range(len(self.R)):
@@ -272,6 +278,7 @@ class MPPI():
             ax = plt.gca()
             ax.add_artist(circle1)
         plt.xlim([0,5])
+        plt.ylim([0,5])
         plt.show()
         plt.plot(self.t, np.transpose(self.X)[2])
         plt.show()
@@ -289,6 +296,9 @@ class MPPI():
                 plt.show()
             else:
                 print(np.size(self.sample_data))
+
+        if self.save_data == True:
+            savetxt('data.csv', self.X, delimiter=',')
 
 
 if __name__ == "__main__":
