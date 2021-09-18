@@ -42,8 +42,8 @@ class MPPI():
         self.Obstacle_Y = matrix([0.5, 3, 2])
         self.R = matrix([0.5, 1.5, 0.5])
 
-        self.use_cbf = False            #use cbf
-        self.constraint_use = True      #one obstacle 
+        self.use_cbf = True            #use cbf
+        self.constraint_use = False      #one obstacle 
         self.multi_ = False             #multi obstacles
 
         self.plot_sample = True         #plot sample trajectory
@@ -298,7 +298,7 @@ class MPPI():
                 print(np.size(self.sample_data))
 
         if self.save_data == True:
-            savetxt('data.csv', self.X, delimiter=',')
+            savetxt('200sample_single_CBF.csv', self.X, delimiter=',')
 
 
 if __name__ == "__main__":
