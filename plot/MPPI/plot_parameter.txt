@@ -1,9 +1,9 @@
 sigma = [1.0] [0.1]
 lmabda = 0.1
-plot 1 parameter 100 samples
+plot 1 parameter 100 samples 20
 sigma = [1.0] [0.1]
 lmabda = 0.1
-plot 2 parameter 500 samples
+plot 2 parameter 500 samples 20
 sigma = [1.0] [1.0]
 lmabda = 0.1
-plot 3 parameter 500 samples
+plot 3 parameter 500 samples 20
