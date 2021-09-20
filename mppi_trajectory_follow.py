@@ -287,7 +287,7 @@ class MPPI():
             if self.multi_ == False:
                 print(np.size(self.sample_data))
                 for i in range(len(self.sample_data)):
-                    plt.plot(np.transpose(self.sample_data[i])[0], np.transpose(self.sample_data[i])[1])
+                    plt.plot(np.transpose(self.sample_data[i])[0], np.transpose(self.sample_data[i])[1], color='g')
                 circle1 = plt.Circle((self.obstcle_x, self.obstcle_y), self.r, color='r', fill=False)
                 ax = plt.gca()
                 ax.add_artist(circle1)
@@ -298,12 +298,12 @@ class MPPI():
                 print(np.size(self.sample_data))
 
         if self.save_data == True:
-            savetxt('200sample_single_CBF.csv', self.X, delimiter=',')
+            savetxt('200sample_single_CBF3.csv', self.X, delimiter=',')
 
 
 if __name__ == "__main__":
     TIMESTEPS = 20  # T
-    N_SAMPLES = 100  # K
+    N_SAMPLES = 200  # K
     ACTION_LOW = -10.0
     ACTION_HIGH = 10.0
 
