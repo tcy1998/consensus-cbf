@@ -38,12 +38,12 @@ class MPPI():
         self.obstcle_y = 2.0
         self.r =0.5
 
-        self.Obstacle_X = matrix([1.5, 1, 3])
-        self.Obstacle_Y = matrix([0.5, 3, 2])
-        self.R = matrix([0.5, 1.5, 0.5])
+        self.Obstacle_X = matrix([1.5, 1.5, 3.5])
+        self.Obstacle_Y = matrix([1.0, 3.3, 2.5])
+        self.R = matrix([1.0, 1.0, 1.0])
 
-        self.use_cbf = True            #use cbf
-        self.constraint_use = False      #one obstacle 
+        self.use_cbf = False            #use cbf
+        self.constraint_use = True      #Orignal MPPI
         self.multi_ = False             #multi obstacles
 
         self.plot_sample = True         #plot sample trajectory
@@ -296,21 +296,39 @@ class MPPI():
                 plt.show()
             else:
                 print(np.size(self.sample_data))
+                for i in range(len(self.sample_data)):
+                    plt.plot(np.transpose(self.sample_data[i])[0], np.transpose(self.sample_data[i])[1], color='g')
+                for i in range(len(self.R)):
+                    circle1 = plt.Circle((self.Obstacle_X[i], self.Obstacle_Y[i]), self.R[i], color='r', fill=False)
+                    ax = plt.gca()
+                    ax.add_artist(circle1)
+                plt.xlim([0,4])
+                plt.ylim([0,4])
+                plt.show()
 
         if self.save_data == True:
-            savetxt('200sample_single_CBF3.csv', self.X, delimiter=',')
+            if self.use_cbf == True:
+                if self.multi_ == True:
+                    savetxt('{}sample_{}steps_multi_CBF.csv'.format(self.K,self.T), self.X, delimiter=',')
+                else:
+                    savetxt('{}sample_{}steps_single_CBF.csv'.format(self.K,self.T), self.X, delimiter=',')
+            else:
+                if self.multi_ ==True:
+                    savetxt('{}sample_{}steps_multi_MPPI.csv'.format(self.K,self.T), self.X, delimiter=',')
+                else:
+                    savetxt('{}sample_{}steps_single_MPPI.csv'.format(self.K,self.T), self.X, delimiter=',')
 
 
 if __name__ == "__main__":
     TIMESTEPS = 20  # T
-    N_SAMPLES = 200  # K
+    N_SAMPLES = 500  # K
     ACTION_LOW = -10.0
     ACTION_HIGH = 10.0
 
     noise_mu = (0, 0)
     noise_sigma = [[1, 0], [0, 1]]
     lambda_ = 0.1
-    iteration = 250
+    iteration = 100
 
     U = np.zeros((TIMESTEPS,2))
     U.T[:1] = 2.5
