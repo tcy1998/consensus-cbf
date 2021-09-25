@@ -44,7 +44,7 @@ class MPPI():
 
         self.use_cbf = False            #use cbf
         self.constraint_use = True      #Orignal MPPI
-        self.multi_ = False             #multi obstacles
+        self.multi_ = True             #multi obstacles
 
         self.plot_sample = True         #plot sample trajectory
         self.sample_data = np.zeros((self.K,self.T,3))
@@ -177,7 +177,7 @@ class MPPI():
                 matrix(A_[1],(1,2)) @ variance @ matrix(A_[1],(2,1))+ A_[1] @ mean >> B[1],\
                 matrix(A_[2],(1,2)) @ variance @ matrix(A_[2],(2,1))+ A_[2] @ mean >> B[2],
                 variance >> 0]
-            objective = cp.Minimize(cp.trace(variance)+cp.norm(mean,1))
+            objective = cp.Minimize(cp.trace(variance)+cp.norm(mean,2))
             prob = cp.Problem(objective, constraints)
             prob.solve()
         else:
@@ -310,18 +310,26 @@ class MPPI():
             if self.use_cbf == True:
                 if self.multi_ == True:
                     savetxt('{}sample_{}steps_multi_CBF.csv'.format(self.K,self.T), self.X, delimiter=',')
+                    savetxt('{}sample_{}steps_multi_CBF_cost.csv'.format(self.K,self.T), self.Reward, delimiter=',')
+                    savetxt('{}sample_{}steps_multi_CBF_{}timestep.csv'.format(self.K,self.T,self.plot_sample_time), self.X, delimiter=',')
                 else:
                     savetxt('{}sample_{}steps_single_CBF.csv'.format(self.K,self.T), self.X, delimiter=',')
+                    savetxt('{}sample_{}steps_single_CBF_cost.csv'.format(self.K,self.T), self.Reward, delimiter=',')
+                    savetxt('{}sample_{}steps_single_CBF_{}timestep.csv'.format(self.K,self.T,self.plot_sample_time), self.X, delimiter=',')
             else:
                 if self.multi_ ==True:
                     savetxt('{}sample_{}steps_multi_MPPI.csv'.format(self.K,self.T), self.X, delimiter=',')
+                    savetxt('{}sample_{}steps_multi_MPPI_cost.csv'.format(self.K,self.T), self.Reward, delimiter=',')
+                    savetxt('{}sample_{}steps_multi_MPPI_{}timestep.csv'.format(self.K,self.T,self.plot_sample_time), self.X, delimiter=',')
                 else:
                     savetxt('{}sample_{}steps_single_MPPI.csv'.format(self.K,self.T), self.X, delimiter=',')
+                    savetxt('{}sample_{}steps_single_MPPI_cost.csv'.format(self.K,self.T), self.Reward, delimiter=',')
+                    savetxt('{}sample_{}steps_single_MPPI_{}timestep.csv'.format(self.K,self.T,self.plot_sample_time), self.X, delimiter=',')
 
 
 if __name__ == "__main__":
-    TIMESTEPS = 20  # T
-    N_SAMPLES = 500  # K
+    TIMESTEPS = 40  # T
+    N_SAMPLES = 100  # K
     ACTION_LOW = -10.0
     ACTION_HIGH = 10.0
 
