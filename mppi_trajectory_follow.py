@@ -8,6 +8,7 @@ import cvxopt
 import time
 from numpy import savetxt
 
+
 class MPPI():
     def __init__(self, K, T, U, lambda_=1.0, noise_mu=0, noise_sigma=0.1, u_init=2.5, noise_gaussian=True, downward_start=True, iter=100):
         self.K = K  # N_SAMPLES
@@ -44,7 +45,7 @@ class MPPI():
 
         self.use_cbf = False            #use cbf
         self.constraint_use = True      #Orignal MPPI
-        self.multi_ = True             #multi obstacles
+        self.multi_ = False             #multi obstacles
 
         self.plot_sample = True         #plot sample trajectory
         self.sample_data = np.zeros((self.K,self.T,3))
@@ -285,7 +286,6 @@ class MPPI():
 
         if self.plot_sample == True:
             if self.multi_ == False:
-                print(np.size(self.sample_data))
                 for i in range(len(self.sample_data)):
                     plt.plot(np.transpose(self.sample_data[i])[0], np.transpose(self.sample_data[i])[1], color='g')
                 circle1 = plt.Circle((self.obstcle_x, self.obstcle_y), self.r, color='r', fill=False)
@@ -295,7 +295,6 @@ class MPPI():
                 plt.ylim([1,4])
                 plt.show()
             else:
-                print(np.size(self.sample_data))
                 for i in range(len(self.sample_data)):
                     plt.plot(np.transpose(self.sample_data[i])[0], np.transpose(self.sample_data[i])[1], color='g')
                 for i in range(len(self.R)):
@@ -306,29 +305,32 @@ class MPPI():
                 plt.ylim([0,4])
                 plt.show()
 
+        self.sample_data_reshape = self.sample_data.reshape(self.sample_data.shape[0], -1)
+        print(np.shape(self.sample_data), np.shape(self.sample_data_reshape))
+
         if self.save_data == True:
             if self.use_cbf == True:
                 if self.multi_ == True:
                     savetxt('{}sample_{}steps_multi_CBF.csv'.format(self.K,self.T), self.X, delimiter=',')
                     savetxt('{}sample_{}steps_multi_CBF_cost.csv'.format(self.K,self.T), self.Reward, delimiter=',')
-                    savetxt('{}sample_{}steps_multi_CBF_{}timestep.csv'.format(self.K,self.T,self.plot_sample_time), self.X, delimiter=',')
+                    savetxt('{}sample_{}steps_multi_CBF_{}timestep.csv'.format(self.K,self.T,self.plot_sample_time), self.sample_data_reshape, delimiter=',')
                 else:
                     savetxt('{}sample_{}steps_single_CBF.csv'.format(self.K,self.T), self.X, delimiter=',')
                     savetxt('{}sample_{}steps_single_CBF_cost.csv'.format(self.K,self.T), self.Reward, delimiter=',')
-                    savetxt('{}sample_{}steps_single_CBF_{}timestep.csv'.format(self.K,self.T,self.plot_sample_time), self.X, delimiter=',')
+                    savetxt('{}sample_{}steps_single_CBF_{}timestep.csv'.format(self.K,self.T,self.plot_sample_time), self.sample_data_reshape, delimiter=',')
             else:
                 if self.multi_ ==True:
                     savetxt('{}sample_{}steps_multi_MPPI.csv'.format(self.K,self.T), self.X, delimiter=',')
                     savetxt('{}sample_{}steps_multi_MPPI_cost.csv'.format(self.K,self.T), self.Reward, delimiter=',')
-                    savetxt('{}sample_{}steps_multi_MPPI_{}timestep.csv'.format(self.K,self.T,self.plot_sample_time), self.X, delimiter=',')
+                    savetxt('{}sample_{}steps_multi_MPPI_{}timestep.csv'.format(self.K,self.T,self.plot_sample_time), self.sample_data_reshape, delimiter=',')
                 else:
                     savetxt('{}sample_{}steps_single_MPPI.csv'.format(self.K,self.T), self.X, delimiter=',')
                     savetxt('{}sample_{}steps_single_MPPI_cost.csv'.format(self.K,self.T), self.Reward, delimiter=',')
-                    savetxt('{}sample_{}steps_single_MPPI_{}timestep.csv'.format(self.K,self.T,self.plot_sample_time), self.X, delimiter=',')
+                    savetxt('{}sample_{}steps_single_MPPI_{}timestep.csv'.format(self.K,self.T,self.plot_sample_time), self.sample_data_reshape, delimiter=',')
 
 
 if __name__ == "__main__":
-    TIMESTEPS = 40  # T
+    TIMESTEPS = 20  # T
     N_SAMPLES = 100  # K
     ACTION_LOW = -10.0
     ACTION_HIGH = 10.0

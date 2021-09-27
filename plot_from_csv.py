@@ -1,17 +1,17 @@
+from cvxpy.atoms.norm import norm
 from numpy import loadtxt
 import numpy as np
 import math
 import matplotlib.pyplot as plt
 from mppi_trajectory_follow import MPPI
 from cvxopt import matrix
+import matplotlib.cm as cm
+from matplotlib.colors import Normalize
 
 def calculate_cost(data):
-    Cost = []
-    for i in range(np.size(data)):
-        print(data[i])
+    for i in range(np.shape(data)[0]):
         cost = (data[i][0] - 4.0) ** 2 + (data[i][1] - 4.0)**2
-        Cost.append(cost)
-    return Cost
+    return cost
 
 obstcle_x = 2.2
 obstcle_y = 2.0
@@ -24,6 +24,28 @@ R = matrix([1.0, 1.0, 1.0])
 
 # load array
 data = loadtxt('data.csv', delimiter=',')
+
+sample_data_CBF = loadtxt('100sample_20steps_single_MPPI_7timestep.csv', delimiter=',')
+sample_data_CBF_reshape = sample_data_CBF.reshape(sample_data_CBF.shape[0], sample_data_CBF.shape[1] // 3,3)
+sample_data_CBF_cost = []
+print(np.shape(sample_data_CBF),np.shape(sample_data_CBF_reshape))
+for i in range(len(sample_data_CBF_reshape)):
+    cost1 = calculate_cost(sample_data_CBF_reshape[i])
+    sample_data_CBF_cost.append(cost1)
+plt.figure(figsize=(10,8))
+norm = Normalize(min(sample_data_CBF_cost),max(sample_data_CBF_cost))
+print(np.shape(sample_data_CBF_cost), norm)
+for i in range(len(sample_data_CBF_reshape)):
+    plt.plot(np.transpose(sample_data_CBF_reshape[i])[0], np.transpose(sample_data_CBF_reshape[i])[1], color=cm.coolwarm(norm(sample_data_CBF_cost[i])))
+
+circle1 = plt.Circle((obstcle_x, obstcle_y), r, color='r', fill=False)
+ax = plt.gca()
+ax.add_artist(circle1)
+plt.xlim([1,4])
+plt.ylim([1,4])
+plt.show()
+
+
 
 CBF_500 = loadtxt('500sample_single_CBF.csv',delimiter=',')
 CBF_200 = loadtxt('200sample_single_CBF.csv', delimiter=',')
