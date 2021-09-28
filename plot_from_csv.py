@@ -3,14 +3,17 @@ from numpy import loadtxt
 import numpy as np
 import math
 import matplotlib.pyplot as plt
+from numpy.core.fromnumeric import reshape
 from mppi_trajectory_follow import MPPI
 from cvxopt import matrix
 import matplotlib.cm as cm
 from matplotlib.colors import Normalize
 
 def calculate_cost(data):
+    cost = 0
+    # print(np.shape(data)[0])
     for i in range(np.shape(data)[0]):
-        cost = (data[i][0] - 4.0) ** 2 + (data[i][1] - 4.0)**2
+        cost += (data[i][0] - 4.0) ** 2 + (data[i][1] - 4.0)**2
     return cost
 
 obstcle_x = 2.2
@@ -28,16 +31,34 @@ data = loadtxt('data.csv', delimiter=',')
 sample_data_CBF = loadtxt('100sample_20steps_single_MPPI_7timestep.csv', delimiter=',')
 sample_data_CBF_reshape = sample_data_CBF.reshape(sample_data_CBF.shape[0], sample_data_CBF.shape[1] // 3,3)
 sample_data_CBF_cost = []
-print(np.shape(sample_data_CBF),np.shape(sample_data_CBF_reshape))
 for i in range(len(sample_data_CBF_reshape)):
     cost1 = calculate_cost(sample_data_CBF_reshape[i])
     sample_data_CBF_cost.append(cost1)
-plt.figure(figsize=(10,8))
+plt.figure(figsize=(10,10))
 norm = Normalize(min(sample_data_CBF_cost),max(sample_data_CBF_cost))
 print(np.shape(sample_data_CBF_cost), norm)
 for i in range(len(sample_data_CBF_reshape)):
-    plt.plot(np.transpose(sample_data_CBF_reshape[i])[0], np.transpose(sample_data_CBF_reshape[i])[1], color=cm.coolwarm(norm(sample_data_CBF_cost[i])))
+    plt.plot(np.transpose(sample_data_CBF_reshape[i])[0], np.transpose(sample_data_CBF_reshape[i])[1], color=cm.RdBu(norm(sample_data_CBF_cost[i])))
 
+circle1 = plt.Circle((obstcle_x, obstcle_y), r, color='r', fill=False)
+ax = plt.gca()
+ax.add_artist(circle1)
+plt.xlim([1,4])
+plt.ylim([1,4])
+plt.show()
+
+random_indices = np.random.choice(np.shape(sample_data_CBF_reshape)[0], size=20, replace=False)
+print(random_indices,np.shape(sample_data_CBF_reshape))
+
+random_samples = sample_data_CBF_reshape[random_indices,:]
+random_samples_cost = []
+print(np.shape(random_samples))
+for i in range(len(random_samples)):
+    cost2 = calculate_cost(random_samples[i])
+    random_samples_cost.append(cost2)
+random_samples_norm = Normalize(min(random_samples_cost), max(random_samples_cost))
+for i in range(len(random_samples)):
+    plt.plot(np.transpose(random_samples[i])[0], np.transpose(random_samples[i])[1], color=cm.RdBu(random_samples_norm(random_samples_cost[i])))
 circle1 = plt.Circle((obstcle_x, obstcle_y), r, color='r', fill=False)
 ax = plt.gca()
 ax.add_artist(circle1)
