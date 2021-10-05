@@ -44,7 +44,7 @@ class MPPI():
 
         self.use_cbf = False            #use cbf
         self.constraint_use = True      #Orignal MPPI
-        self.multi_ = False             #multi obstacles
+        self.multi_ = True             #multi obstacles
 
         self.plot_sample = True         #plot sample trajectory
         self.sample_data = np.zeros((self.K,self.T,3))
@@ -321,7 +321,7 @@ class MPPI():
 
 if __name__ == "__main__":
     TIMESTEPS = 20  # T
-    N_SAMPLES = 500  # K
+    N_SAMPLES = 4000  # K
     ACTION_LOW = -10.0
     ACTION_HIGH = 10.0
 
