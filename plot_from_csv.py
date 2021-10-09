@@ -50,14 +50,14 @@ for i in range(len(sample_data_CBF_reshape)):
     sample_data_CBF_cost.append(cost1)
 
 # ax = plt.subplots()
-plt.figure(figsize=(8,8))
+plt.figure(figsize=(10,8))
 norm = Normalize(min(sample_data_CBF_cost),max(sample_data_CBF_cost))
 print(np.shape(sample_data_CBF_cost), norm)
 for i in range(len(sample_data_CBF_reshape)):
     plt.plot(np.transpose(sample_data_CBF_reshape[i])[0], np.transpose(sample_data_CBF_reshape[i])[1], color=cm.coolwarm(norm(sample_data_CBF_cost[i])))
 
-# sm = plt.cm.ScalarMappable(cmap=cm.coolwarm, norm=norm)
-plt.colorbar()
+sm = plt.cm.ScalarMappable(cmap=cm.coolwarm, norm=norm)
+plt.colorbar(sm)
 circle1 = plt.Circle((obstcle_x, obstcle_y), r, color='r', fill=False)
 ax = plt.gca()
 ax.add_artist(circle1)
