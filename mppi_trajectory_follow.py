@@ -31,7 +31,7 @@ class MPPI():
         self.X, self.Reward = np.zeros(shape=(iter,3)),np.zeros(shape=(iter))
         self.iter = iter
         self.max_speed = 5.0
-        self.max_angle_speed = 10.0
+        self.max_angle_speed = 5.0
 
 
         # Obstacle parameters
@@ -336,8 +336,8 @@ if __name__ == "__main__":
     ACTION_HIGH = 10.0
 
     noise_mu = (0, 0)
-    noise_sigma = [[1, 0], [0, 1]]
-    lambda_ = 0.1
+    noise_sigma = [[1, 0], [0, 0.1]]
+    lambda_ = 1.0
     iteration = 100
 
     U = np.zeros((TIMESTEPS,2))
