@@ -43,9 +43,9 @@ class MPPI():
         self.Obstacle_Y = matrix([1.0, 3.3, 2.5])
         self.R = matrix([1.0, 1.0, 1.0])
 
-        self.use_cbf = False            #use cbf
-        self.constraint_use = True      #Orignal MPPI
-        self.multi_ = False             #multi obstacles
+        self.use_cbf = True            #use cbf
+        self.constraint_use = False      #Orignal MPPI
+        self.multi_ = True             #multi obstacles
 
         self.plot_sample = True         #plot sample trajectory
         self.sample_data = np.zeros((self.K,self.T,3))
