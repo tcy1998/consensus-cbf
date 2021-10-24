@@ -43,15 +43,16 @@ class MPPI():
         self.Obstacle_Y = matrix([1.0, 3.3, 2.5])
         self.R = matrix([1.0, 1.0, 1.0])
 
-        self.use_cbf = True            #use cbf
+        self.use_cbf = False            #use cbf
         self.constraint_use = False      #Orignal MPPI
-        self.multi_ = True             #multi obstacles
+        self.multi_ = False             #multi obstacles
+        self.naive_cbf = True
 
         self.plot_sample = True         #plot sample trajectory
         self.sample_data = np.zeros((self.K,self.T,3))
         self.plot_sample_time = 7
 
-        self.save_data = True
+        self.save_data = False
 
 
     def _compute_total_cost(self, k, time_step):
@@ -239,6 +240,10 @@ class MPPI():
                 delta_U = np.matmul(omega.reshape((1,self.K)),self.noise[:, t])
                 D_u[t]=delta_U
             self.U += D_u
+
+            if self.naive_cbf == True:
+                # print(self.U[0], self.cbf(self.x_init,self.U[0]).reshape(1,2))
+                self.U[0] += self.cbf(self.x_init,self.U[0]).T[0]
 
             s,r1 = self.dynamic(self.x_init,self.U[0])
             r = self.terminal_cost(s, self.U[0])

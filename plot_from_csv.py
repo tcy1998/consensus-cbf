@@ -15,6 +15,18 @@ def calculate_cost(data):
     # print(np.shape(data)[0])
     for i in range(np.shape(data)[0]):
         cost += (data[i][0] - 4.0) ** 2 + (data[i][1] - 4.0)**2
+        if (data[i][0] - obstcle_x) ** 2 + (data[i][1] - obstcle_y)**2 < r **2:
+            cost += 10   
+    return cost
+
+def calculate_multi_cost(data):
+    cost = 0
+    # print(np.shape(data)[0])
+    for i in range(np.shape(data)[0]):
+        cost += (data[i][0] - 4.0) ** 2 + (data[i][1] - 4.0)**2
+        for j in range(3):
+            if (data[i][0] - Obstacle_X[j]) ** 2 + (data[i][1] - Obstacle_Y[j])**2 < R[j] **2:
+                cost += 10   
     return cost
 
 def state_cost(data):
@@ -22,6 +34,8 @@ def state_cost(data):
     for i in range(np.shape(data)[0]):
         cost = (data[i][0] - 4.0) ** 2 + (data[i][1] - 4.0)**2
         costs.append(cost)
+    if (data[i][0] - obstcle_x) ** 2 + (data[i][1] - obstcle_y)**2 < r **2:
+        cost += 10000
     return costs
 
 def plot_time(data):
@@ -97,7 +111,7 @@ def sample_multi_data_plot(dataname):
     sample_data_CBF_reshape = sample_data_CBF.reshape(sample_data_CBF.shape[0], sample_data_CBF.shape[1] // 3,3)
     sample_data_CBF_cost = []
     for i in range(len(sample_data_CBF_reshape)):
-        cost1 = calculate_cost(sample_data_CBF_reshape[i])
+        cost1 = calculate_multi_cost(sample_data_CBF_reshape[i])
         sample_data_CBF_cost.append(cost1)
 
     # ax = plt.subplots()
@@ -140,14 +154,14 @@ CBF_50 = loadtxt('50sample_single_CBF.csv', delimiter=',')
 
 
 plt.figure(figsize=(8,8))
-plt.plot(np.transpose(CBF_500)[0], np.transpose(CBF_500)[1],label='500_samples')
-plt.plot(np.transpose(CBF_200)[0], np.transpose(CBF_200)[1],label='200_samples')
-plt.plot(np.transpose(CBF_100)[0], np.transpose(CBF_100)[1],label='100_samples')
-plt.plot(np.transpose(CBF_50)[0], np.transpose(CBF_50)[1],label='50_samples')
+plt.plot(np.transpose(CBF_500)[0], np.transpose(CBF_500)[1],label='500 samples')
+plt.plot(np.transpose(CBF_200)[0], np.transpose(CBF_200)[1],label='200 samples')
+plt.plot(np.transpose(CBF_100)[0], np.transpose(CBF_100)[1],label='100 samples')
+plt.plot(np.transpose(CBF_50)[0], np.transpose(CBF_50)[1],label='50 samples')
 circle1 = plt.Circle((obstcle_x, obstcle_y), r, color='k', fill=False)
 ax = plt.gca()
 ax.add_artist(circle1)
-legend = ax.legend(loc='lower right', shadow=True, fontsize='large')
+legend = ax.legend(loc='lower right', shadow=True, fontsize='x-large')
 target_circle = plt.Circle((target[0], target[1]), 0.2, color='b', fill=False)
 target_circle_1 = plt.Circle((target[0], target[1]), 0.1, color='b', fill=False)
 ax.add_artist(target_circle)
@@ -167,10 +181,10 @@ multi_MPPI_50_40 = loadtxt('50sample_40steps_multi_MPPI.csv', delimiter=',')
 multi_MPPI_100_40 = loadtxt('100sample_40steps_multi_MPPI.csv',delimiter=',')
 
 plt.figure(figsize=(8,8))
-plt.plot(np.transpose(multi_CBF_100_20)[0], np.transpose(multi_CBF_100_20)[1],label='100_samples_MPPI_CBF')
-plt.plot(np.transpose(multi_CBF_50_20)[0], np.transpose(multi_CBF_50_20)[1],label='50_samples_MPPI_CBF')
-plt.plot(np.transpose(multi_MPPI_100_40)[0], np.transpose(multi_MPPI_100_40)[1],label='100_samples_MPPI')
-plt.plot(np.transpose(multi_MPPI_50_40)[0], np.transpose(multi_MPPI_50_40)[1],label='50_samples_MPPI')
+plt.plot(np.transpose(multi_CBF_100_20)[0], np.transpose(multi_CBF_100_20)[1],label='100 samples MPPI-CBF')
+plt.plot(np.transpose(multi_CBF_50_20)[0], np.transpose(multi_CBF_50_20)[1],label='50 samples MPPI-CBF')
+plt.plot(np.transpose(multi_MPPI_100_40)[0], np.transpose(multi_MPPI_100_40)[1],label='100 samples MPPI')
+plt.plot(np.transpose(multi_MPPI_50_40)[0], np.transpose(multi_MPPI_50_40)[1],label='50 samples MPPI')
 
 
 for i in range(len(R)):
@@ -178,8 +192,8 @@ for i in range(len(R)):
     ax = plt.gca()
     ax.add_artist(circle1)
 plt.xlim([0,5.5])
-plt.ylim([0,5.5])
-legend = ax.legend(loc='lower right', shadow=True, fontsize='large')
+plt.ylim([-1,4.5])
+legend = ax.legend(loc='lower right', shadow=True, fontsize='x-large')
 target_circle = plt.Circle((target[0], target[1]), 0.2, color='b', fill=False)
 target_circle_1 = plt.Circle((target[0], target[1]), 0.1, color='b', fill=False)
 ax.add_artist(target_circle)
@@ -195,14 +209,14 @@ MPPI_100 = loadtxt('100sample_20steps_single_MPPI.csv', delimiter=',')
 MPPI_50 = loadtxt('50sample_20steps_single_MPPI.csv', delimiter=',')
 
 plt.figure(figsize=(8,8))
-plt.plot(np.transpose(MPPI_500)[0], np.transpose(MPPI_500)[1],label='500_samples')
-plt.plot(np.transpose(MPPI_200)[0], np.transpose(MPPI_200)[1],label='200_samples')
-plt.plot(np.transpose(MPPI_100)[0], np.transpose(MPPI_100)[1],label='100_samples')
-plt.plot(np.transpose(MPPI_50)[0], np.transpose(MPPI_50)[1],label='50_samples')
+plt.plot(np.transpose(MPPI_500)[0], np.transpose(MPPI_500)[1],label='500 samples')
+plt.plot(np.transpose(MPPI_200)[0], np.transpose(MPPI_200)[1],label='200 samples')
+plt.plot(np.transpose(MPPI_100)[0], np.transpose(MPPI_100)[1],label='100 samples')
+plt.plot(np.transpose(MPPI_50)[0], np.transpose(MPPI_50)[1],label='50 samples')
 circle1 = plt.Circle((obstcle_x, obstcle_y), r, color='k', fill=False)
 ax = plt.gca()
 ax.add_artist(circle1)
-legend = ax.legend(loc='lower right', shadow=True, fontsize='medium')
+legend = ax.legend(loc='lower right', shadow=True, fontsize='x-large')
 target_circle = plt.Circle((target[0], target[1]), 0.2, color='b', fill=False)
 target_circle_1 = plt.Circle((target[0], target[1]), 0.1, color='b', fill=False)
 ax.add_artist(target_circle)
@@ -215,29 +229,29 @@ plt.ylim([0,4.5])
 plt.show()
 
 plt.figure(figsize=(8,8))
-plt.plot(plot_time(MPPI_500), state_cost(MPPI_500),label='500_samples_MPPI')
-plt.plot(plot_time(MPPI_200), state_cost(MPPI_200),label='200_samples_MPPI')
-plt.plot(plot_time(MPPI_100), state_cost(MPPI_100),label='100_samples_MPPI')
-plt.plot(plot_time(MPPI_50), state_cost(MPPI_50),label='50_samples_MPPI')
-plt.plot(plot_time(CBF_500), state_cost(CBF_500),label='500_samples_MPPI_CBF')
-plt.plot(plot_time(CBF_200), state_cost(CBF_200),label='200_samples_MPPI_CBF')
-plt.plot(plot_time(CBF_100), state_cost(CBF_100),label='100_samples_MPPI_CBF')
-plt.plot(plot_time(CBF_50), state_cost(CBF_50),label='50_samples_MPPI_CBF')
+plt.plot(plot_time(MPPI_500), state_cost(MPPI_500),label='500 samples MPPI')
+plt.plot(plot_time(MPPI_200), state_cost(MPPI_200),label='200 samples MPPI')
+plt.plot(plot_time(MPPI_100), state_cost(MPPI_100),label='100 samples MPPI')
+plt.plot(plot_time(MPPI_50), state_cost(MPPI_50),label='50 samples MPPI')
+plt.plot(plot_time(CBF_500), state_cost(CBF_500),label='500 samples MPPI-CBF')
+plt.plot(plot_time(CBF_200), state_cost(CBF_200),label='200 samples MPPI-CBF')
+plt.plot(plot_time(CBF_100), state_cost(CBF_100),label='100 samples MPPI-CBF')
+plt.plot(plot_time(CBF_50), state_cost(CBF_50),label='50 samples MPPI-CBF')
 ax = plt.gca()
 legend = ax.legend(loc='upper right', shadow=True, fontsize='x-large')
-ax.set_xlabel('Time horizon')
-ax.set_ylabel('Costs')
+ax.set_xlabel('Time horizon', fontsize=18)
+ax.set_ylabel('Costs', fontsize=18)
 ax.grid(True)
 plt.show()
 
 plt.figure(figsize=(8,8))
-plt.plot(plot_time(multi_MPPI_100_40), state_cost(multi_MPPI_100_40),label='100_samples_MPPI')
-plt.plot(plot_time(multi_MPPI_50_40), state_cost(multi_MPPI_50_40),label='50_samples_MPPI')
-plt.plot(plot_time(multi_CBF_100_20), state_cost(multi_CBF_100_20),label='100_samples_MPPI_CBF')
-plt.plot(plot_time(multi_CBF_50_20), state_cost(multi_CBF_50_20),label='50_samples_MPPI_CBF')
+plt.plot(plot_time(multi_MPPI_100_40), state_cost(multi_MPPI_100_40),label='100 samples MPPI')
+plt.plot(plot_time(multi_MPPI_50_40), state_cost(multi_MPPI_50_40),label='50 samples MPPI')
+plt.plot(plot_time(multi_CBF_100_20), state_cost(multi_CBF_100_20),label='100 samples MPPI-CBF')
+plt.plot(plot_time(multi_CBF_50_20), state_cost(multi_CBF_50_20),label='50 samples MPPI-CBF')
 ax = plt.gca()
 legend = ax.legend(loc='upper right', shadow=True, fontsize='x-large')
-ax.set_xlabel('Time horizon')
-ax.set_ylabel('Costs')
+ax.set_xlabel('Time horizon', fontsize=18)
+ax.set_ylabel('Costs', fontsize=18)
 ax.grid(True)
 plt.show()
