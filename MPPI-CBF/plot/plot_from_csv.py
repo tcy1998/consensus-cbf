@@ -140,7 +140,7 @@ sample_data_plot('100sample_20steps_single_CBF_7timestep.csv')
 
 
 sample_multi_data_plot('100sample_40steps_multi_MPPI_7timestep.csv')
-sample_multi_data_plot('100sample_20steps_multi_CBF_7timestep_1.csv')
+sample_multi_data_plot('100sample_20steps_multi_CBF_7timestep.csv')
 
 
 
