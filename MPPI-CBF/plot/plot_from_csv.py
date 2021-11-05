@@ -4,7 +4,7 @@ import numpy as np
 import math
 import matplotlib.pyplot as plt
 from numpy.core.fromnumeric import reshape
-from mppi_trajectory_follow import MPPI
+
 from cvxopt import matrix
 import matplotlib.cm as cm
 from matplotlib.colors import Normalize
