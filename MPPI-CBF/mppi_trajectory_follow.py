@@ -44,11 +44,13 @@ class MPPI():
         self.R = matrix([1.0, 1.0, 1.0])
 
         self.use_cbf = False            #use cbf
-        self.constraint_use = False      #Orignal MPPI
+        self.constraint_use = True      #Orignal MPPI
         self.multi_ = False             #multi obstacles
-        self.naive_cbf = True
+        self.naive_cbf = False
+        self.discounted_use = False
+        self.alpha = 0.5
 
-        self.plot_sample = True         #plot sample trajectory
+        self.plot_sample = False         #plot sample trajectory
         self.sample_data = np.zeros((self.K,self.T,3))
         self.plot_sample_time = 7
 
@@ -133,7 +135,10 @@ class MPPI():
         costs = 10*(x_des - newx) ** 2 + 10* (y_des - newy) ** 2 + 1*(self.v_desire-u[0])**2
 
         if self.constraint_use == True:
-            costs += self.obstacle(newx, newy)
+            if self.discounted_use == True:
+                costs += self.alpha * self.obstacle(newx, newy)
+            else:
+                costs += self.obstacle(newx, newy)                
         if self.multi_ == True:
             costs += self.multi_obstacle(newx, newy)
             # print(costs)
@@ -251,7 +256,7 @@ class MPPI():
             self.U[-1] = self.u_init  #
             self.cost_total[:] = 0
             self.x_init = s
-            print(self.x_init,r)
+            # print(self.x_init,r)
 
             #Save data for plotting
             self.X[_] = np.transpose(self.x_init)
@@ -261,6 +266,8 @@ class MPPI():
             if ((self.x_init[0]-self.target[0])**2 + (self.x_init[1]-self.target[1])**2 < 0.04):
                 self.iter = _
                 break
+
+        return self.X, self.Reward, self.iter
 
     # Plot the figures
     def plot_figure(self, iter=1000):
@@ -335,7 +342,7 @@ class MPPI():
 
 
 if __name__ == "__main__":
-    TIMESTEPS = 20  # T
+    TIMESTEPS = 40  # T
     N_SAMPLES = 100  # K
     ACTION_LOW = -10.0
     ACTION_HIGH = 10.0
@@ -348,6 +355,19 @@ if __name__ == "__main__":
     U = np.zeros((TIMESTEPS,2))
     U.T[:1] = 2.5
     # print(U)
-    mppi_unicycle = MPPI(K=N_SAMPLES, T=TIMESTEPS, U=U, lambda_=lambda_, noise_mu=noise_mu, noise_sigma=noise_sigma, u_init=2.5, noise_gaussian=True,iter=iteration)
-    mppi_unicycle.control(iter=iteration)
-    mppi_unicycle.plot_figure(iter=iteration)
+    # mppi_unicycle = MPPI(K=N_SAMPLES, T=TIMESTEPS, U=U, lambda_=lambda_, noise_mu=noise_mu, noise_sigma=noise_sigma, u_init=2.5, noise_gaussian=True,iter=iteration)
+    # mppi_unicycle.control(iter=iteration)
+    # mppi_unicycle.plot_figure(iter=iteration)
+
+    # print(traj,r,iteration)
+    Traj, R, Iteration = [], [], []
+    for i in range(3):
+        m = MPPI(K=N_SAMPLES, T=TIMESTEPS, U=U, lambda_=lambda_, noise_mu=noise_mu, noise_sigma=noise_sigma, u_init=2.5, noise_gaussian=True,iter=iteration)
+        traj, r, iteration = m.control(iter=iteration)
+        Traj.append(traj[:iteration])
+        R.append(r)
+        Iteration.append(iteration)
+    # print(np.shape(Traj), np.shape(R), np.shape(Iteration))
+    for i in range(3):
+        plt.plot(np.transpose(Traj[i])[0], np.transpose(Traj[i])[1])
+    plt.show()
