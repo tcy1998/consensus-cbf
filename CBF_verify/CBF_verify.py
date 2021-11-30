@@ -1,6 +1,6 @@
 import sympy as sp
 import numpy as np
-from SumOfSquares import SOSProblem, poly_opt_prob
+# from SumOfSquares import SOSProblem, poly_opt_prob
 from cvxopt import matrix, solvers
 import matplotlib.animation as animation
 import matplotlib.pyplot as plt
@@ -14,6 +14,12 @@ def dynamics_1(state, u):
     x_1new = x_1 + (x_1 + u[0][0])* dt 
     x_2new = x_2 + (-x_1 + 4 * x_2) * dt
     return [x_1new, x_2new]
+
+def dynamics_2(state, u):
+    x_1, x_2 = state[0], state[1]
+    x_1new = x_1 + (x_2)* dt 
+    x_2new = x_2 + (x_1 + u[1][0]) * dt
+    return [x_1new, x_2new]    
 
 def feedback_control(state):
     return -8 * state[0] + 30 * state[1]
@@ -67,7 +73,15 @@ def main():
         print(x)
         t += dt
     # print(np.transpose(X)[0])
+    fig, ax = plt.subplots() 
     plt.plot(np.transpose(X)[0], np.transpose(X)[1])
+    circle1 = plt.Circle((0,0), 1, color='blue', fill=False)
+    ax.add_patch(circle1)
+    t = np.linspace(-1,1, num=100)
+    ht = [func_h_bar([s,s]) for s in t]
+    plt.plot(t, t**2)
+    plt.ylim(-1,1)
+    plt.xlim(-1,2.5)
     plt.show()
 
 
