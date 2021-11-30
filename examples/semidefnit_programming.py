@@ -6,6 +6,8 @@ import cvxopt
 import time
 
 
+
+
 x = cp.Variable((3, 3), PSD=True)
 y = cp.Variable((1, 3))
 a = cvxopt.matrix([[1, 0, 0], [0, 0, 0], [0, 1, 1]])
