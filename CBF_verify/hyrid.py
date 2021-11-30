@@ -8,6 +8,10 @@ gamma, alpha = 0.5, np.pi/8
 theta, theta_d, theta_dd = alpha, 0.0, 0.0
 g, l = 9.8, 1.0
 
+def controller(state):
+    k= 1
+    return -k*state[0]
+
 for t in range(int(T/dt)):
     if theta >= gamma + alpha:
         theta_d = theta_d * np.cos(2*alpha)
@@ -16,7 +20,7 @@ for t in range(int(T/dt)):
         Theta_d.append(theta_d)
         # print("hit")
     else:
-        theta_d += g/l * np.sin(theta) * dt
+        theta_d += g/l * np.sin(theta) * dt + controller([theta, theta_d])
         theta += theta_d * dt
         Theta.append(theta)
         Theta_d.append(theta_d)
