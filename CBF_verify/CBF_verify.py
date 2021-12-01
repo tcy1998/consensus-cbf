@@ -4,6 +4,8 @@ import numpy as np
 from cvxopt import matrix, solvers
 import matplotlib.animation as animation
 import matplotlib.pyplot as plt
+from sympy import plot_implicit, symbols, Eq, And
+from matplotlib.patches import Ellipse
 
 dt = 0.05
 x_init_1 = [-0.75, -0.15]
@@ -77,12 +79,19 @@ def main():
     plt.plot(np.transpose(X)[0], np.transpose(X)[1])
     circle1 = plt.Circle((0,0), 1, color='blue', fill=False)
     ax.add_patch(circle1)
-    t = np.linspace(-1,1, num=100)
-    ht = [func_h_bar([s,s]) for s in t]
-    plt.plot(t, t**2)
-    plt.ylim(-1,1)
-    plt.xlim(-1,2.5)
+    ax = plt.gca()
+
+    ellipse = Ellipse(xy=(0, 0), width=1.86849, height=0.1747, 
+                        edgecolor='r', fc='None', lw=2)
+    ax.add_patch(ellipse)
+    # t = np.linspace(-1,1, num=100)
+    # ht = [func_h_bar([s,s]) for s in t]
+    # plt.plot(t, t**2)
+
+    # plt.ylim(-1,1)
+    # plt.xlim(-1,2.5)
     plt.show()
+    
 
 
 

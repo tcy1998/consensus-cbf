@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 
 
 Theta, Theta_d, Theta_dd = [], [], []
-T, dt = 4, 0.001
+T, dt = 40, 0.001
 gamma, alpha = 0.5, np.pi/8
 theta, theta_d, theta_dd = alpha, 0.0, 0.0
 g, l = 9.8, 1.0
@@ -29,8 +29,13 @@ def remless_dynamic(state, u):
         # Theta_d.append(theta_d)
 
 def controller(state):
-    k = -10
-    return k * state[0]
+    k1 = -100
+    k2 = -100
+    # k = 0
+    return k1 * (state[0]-0.5) + k2 * state[1]
+
+# def cbf(state, u):
+
 
 
 for t in range(int(T/dt)):
@@ -44,4 +49,8 @@ t_linspace = np.linspace(0, T, num=int(T/dt))
 plt.plot(Theta, Theta_d)
 plt.axvline(gamma+alpha)
 plt.axvline(gamma-alpha)
+plt.show()
+
+plt.plot(t_linspace, Theta)
+plt.plot(t_linspace, Theta_d)
 plt.show()
