@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
-
+from cvxopt import matrix, solvers
+import time
 
 Theta, Theta_d, Theta_dd = [], [], []
 T, dt = 40, 0.001
@@ -34,16 +35,48 @@ def controller(state):
     # k = 0
     return k1 * (state[0]-0.5) + k2 * state[1]
 
-# def cbf(state, u):
+def func_h_bar(state):
+    return 0.01-state[1]**2
 
+def partial_h_bar(state):
+    # print(-2*state[1])
+    return matrix([[0], [-2*state[1]]])
 
+def QP_CBF(u_norminal, state):
+    alpha = 1000
+    P = matrix([1.0])
+    q = matrix([0.0])
 
+    g_x = matrix([[0],[1]])
+    
+    g = partial_h_bar(state)*g_x.T
+    hx = alpha * (func_h_bar(state))**1 + g[0]*u_norminal
+    G = -g
+    h = matrix([matrix(hx)]) 
+    # print(P,q,G,h)
+    solvers.options['show_progress'] = False
+    sol = solvers.qp(P,q,G,h)
+    u_cbf = np.array(sol['x'])
+    # print(u_cbf)
+    return u_cbf[0]
+
+use_cbf = True
+
+start_time = time.time()
 for t in range(int(T/dt)):
     u = controller([theta, theta_d])
+    if theta_d < 0.1:
+        use_cbf = False
+    else:
+        use_cbf = True
+    if use_cbf == True:
+        u += QP_CBF(u, [theta, theta_d])[0]
     [theta, theta_d] = remless_dynamic([theta,theta_d], u)
     Theta.append(theta)
     Theta_d.append(theta_d)
     t += dt
+
+print("--- %s seconds ---" % (time.time() - start_time))
 
 t_linspace = np.linspace(0, T, num=int(T/dt))
 plt.plot(Theta, Theta_d)

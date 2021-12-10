@@ -6,10 +6,11 @@ import matplotlib.animation as animation
 import matplotlib.pyplot as plt
 from sympy import plot_implicit, symbols, Eq, And
 from matplotlib.patches import Ellipse
+import time
 
 dt = 0.05
 x_init_1 = [-0.75, -0.15]
-x_init_2 = [-0.4, -0.4]
+x_init_2 = [0.4, 0.4]
 
 def dynamics_1(state, u):
     x_1, x_2 = state[0], state[1]
@@ -50,7 +51,7 @@ def QP_CBF(u_norminal, state):
     hx = alpha * func_h_bar(state) + g[0]*u_norminal
     G = -g
     h = matrix([matrix(hx)]) 
-    # print(P,q,G,h)
+    print(P,q,G,h)
     solvers.options['show_progress'] = False
     sol = solvers.qp(P,q,G,h)
     u_cbf = np.array(sol['x'])
@@ -60,7 +61,7 @@ def QP_CBF(u_norminal, state):
 
 
 def main():
-    T = 10
+    T = 0.5
     t = 0
     use_cbf = True
     x = x_init_1
@@ -81,18 +82,21 @@ def main():
     ax.add_patch(circle1)
     ax = plt.gca()
 
-    ellipse = Ellipse(xy=(0, 0), width=1.86849, height=0.1747, 
+    # ellipse = Ellipse(xy=(0, 0), width=1.86849, height=0.1747, 
+                        # edgecolor='r', fc='None', lw=2)
+    ellipse = Ellipse(xy=(0, 0), width=2.1, height=0.4, 
                         edgecolor='r', fc='None', lw=2)
     ax.add_patch(ellipse)
     # t = np.linspace(-1,1, num=100)
     # ht = [func_h_bar([s,s]) for s in t]
     # plt.plot(t, t**2)
 
-    # plt.ylim(-1,1)
-    # plt.xlim(-1,2.5)
+    plt.ylim(-1,1)
+    plt.xlim(-1,2.5)
     plt.show()
     
 
 
-
+start_time = time.time()
 main()
+print("--- %s seconds ---" % (time.time() - start_time))

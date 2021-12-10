@@ -5,7 +5,8 @@ import matplotlib
 # matplotlib.use('Agg')
 from cvxopt import matrix, solvers
 import matplotlib.animation as animation
-from matplotlib.animation import FuncAnimation, PillowWriter 
+from matplotlib.animation import FuncAnimation, PillowWriter
+import time
     
 def UN_LN_controller(virtual_target, true_position, error):
     k1 = -40
@@ -90,7 +91,7 @@ def cbf(u_norminal, u_old, agent1_position, agent2_position, agent3_position, d_
     partial_h_x2 = matrix([2*(x-agent3_position[0][0]), 2*(y-agent3_position[1][0]), 0], (1,3))
     h_x1 = (x-agent2_position[0][0])**2 + (y-agent2_position[1][0])**2 - d_s**2
     h_x2 = (x-agent3_position[0][0])**2 + (y-agent3_position[1][0])**2 - d_s**2
-    alpha = 1000
+    alpha = 10
     uv_max,uv_min,uomega_max,uomega_min = 50.0,-10.0,50.0,-50.0
     lipschitz_constrain = 10
     upper_lipschitz_cons = lipschitz_constrain + u_old[0][0] - u_norminal[0][0]
@@ -115,7 +116,7 @@ def cbf(u_norminal, u_old, agent1_position, agent2_position, agent3_position, d_
 
     G = matrix([[-g1[0],-g2[0],1.0,-1.0,0.0,0.0,1.0,-1.0], [0.0,0.0,0.0,0.0,1.0,-1.0,0.0,0.0]])
     h = matrix([h_1[0][0],h_2[0][0],uv_max-u_norminal[0][0],-uv_min+u_norminal[0][0],uomega_max-u_norminal[1][0],-uomega_min+u_norminal[1][0],upper_lipschitz_cons,lower_lipschitz_cons])
-
+    solvers.options['show_progress'] = False
     sol = solvers.qp(P,q,G,h)
     u_cbf = np.array(sol['x'])
     return u_cbf
@@ -181,7 +182,11 @@ def main():
             if i == 0:
                 virtual_target =  g_id_leader(x[i][0])
                 control_input = UN_controller(virtual_target, leader_true_x, error, desire_speed=15/time_step)
-                # print(control_input)
+                # if ((leader_true_x[0] - follower1_true_x[0]) ** 2 + (leader_true_x[1] - follower1_true_x[1]) ** 2 >= safe_distance**2) and ((leader_true_x[0] - follower2_true_x[0]) ** 2 + (leader_true_x[1] - follower2_true_x[1]) ** 2 >= safe_distance**2):
+                #     Use_cbf = False
+                # else:
+                #     Use_cbf = True
+
                 if Use_cbf == True:
                     control_input += cbf(control_input, u_leader_old, leader_true_x, follower1_true_x, follower2_true_x, d_s=safe_distance)
                 # print(control_input)
@@ -199,6 +204,10 @@ def main():
             if i == 1:
                 virtual_target_1 = g_id_follower1(x[i][0])
                 control_input_1 = UN_controller(virtual_target_1, follower1_true_x, follower1_error, desire_speed=10*np.pi/time_step)
+                # if ((leader_true_x[0] - follower1_true_x[0]) ** 2 + (leader_true_x[1] - follower1_true_x[1]) ** 2 >= safe_distance**2) and ((follower1_true_x[0] - follower2_true_x[0]) ** 2 + (follower1_true_x[1] - follower2_true_x[1]) ** 2 >= safe_distance**2):
+                #     Use_cbf = False
+                # else:
+                #     Use_cbf = True
                 if Use_cbf == True:
                     control_input_1 += cbf(control_input_1, u_follower1_old, follower1_true_x, leader_true_x, follower2_true_x, d_s=safe_distance)
                 follower1_true_x = dynamic(follower1_true_x, control_input_1, time_step_size, disturbance=0)
@@ -213,6 +222,10 @@ def main():
             if i == 2:
                 virtual_target_2 = g_id_follower2(x[i][0])
                 control_input_2 = UN_controller(virtual_target_2, follower2_true_x, follower2_error, desire_speed=10*np.pi/time_step)
+                # if ((follower2_true_x[0] - follower1_true_x[0]) ** 2 + (follower2_true_x[1] - follower1_true_x[1]) ** 2 >= safe_distance**2) and ((follower1_true_x[0] - follower2_true_x[0]) ** 2 + (follower1_true_x[1] - follower2_true_x[1]) ** 2 >= safe_distance**2):
+                #     Use_cbf = False
+                # else:
+                #     Use_cbf = True
                 if Use_cbf == True:
                     control_input_2 += cbf(control_input_2, u_follower2_old, follower2_true_x, leader_true_x, follower1_true_x, d_s=safe_distance)
                 follower2_true_x = dynamic(follower2_true_x, control_input_2, time_step_size, disturbance=0)
@@ -294,10 +307,13 @@ def main():
         return line1,traj1,line2,traj2,line3,traj3,line4,traj4,line5,traj5,line6,traj6,
     anim = animation.FuncAnimation(fig1, animate, frames=time_step_1+1, interval=20, blit=True)
     plt.draw()
+
+    writer = PillowWriter(fps=25)  
+    anim.save("demo_sine_cbf.gif", writer=writer) 
+    
     plt.show()
 
-    # writer = PillowWriter(fps=25)  
-    # anim.save("demo_sine.mp4", writer=writer) 
+
 
     plt.plot(T, np.transpose(X)[0] - np.transpose(X)[1])
     plt.plot(T, np.transpose(X)[0] - np.transpose(X)[2])
@@ -339,8 +355,7 @@ def main():
     plt.plot(np.transpose(Follower2_virtual_target)[0], np.transpose(Follower2_virtual_target)[1])
     plt.plot(np.transpose(Follower2_true_x)[0], np.transpose(Follower2_true_x)[1])
     plt.show()
- 
 
-    
+start_time = time.time()
 main()
-
+print("--- %s seconds ---" % (time.time() - start_time))
