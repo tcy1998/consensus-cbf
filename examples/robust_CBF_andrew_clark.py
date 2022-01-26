@@ -1,17 +1,29 @@
 import numpy as np
+import cvxopt
+from cvxopt import matrix, solvers
+import cvxpy as cp
 
-class robust_CBF:
+class cruise_robust_CBF:
 
     def __init__(self):
-        self.d = 3
-        self.m = 2
+        self.d = 3  #state dimension
+        self.m = 1  #control input dimension
+        self.alpha = 1000   #hyperparameter for cbf
+        self.M = 1650
     
-    def h(self, x):
+    def cbf_h(self, x):     #cbf
         return x[2] - 1.8 * x[0]
-    def partial_h (self, x):
+    def partial_h (self, x):        #partial derivative of cbf
         return np.matrix([-1.8], [0], [1])
 
-    def QP(self, x, u):
+    def g_x(self, x):
+        return np.matrix([1/self.M], [0.0], [0.0])
+
+    def QP(self, x, u):     #using cvxpy to solve qp
+        h = self.cbf_h(x) + self.partial_h(x) * u
+        P = np.identity(self.m)
+        q = np.zeros(self.m)
+        g = - self.partial_h(x) * self.g_x(x)
 
 
 class Cruise_Environment:
