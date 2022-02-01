@@ -8,7 +8,7 @@ class TransitionNCostMdl:
 
     def __init__(self):
         '''
-        Initilize a 2D double integrator model for state transition and cost function 
+        Initilize a 2D double inte3grator model for state transition and cost function 
         '''
         self.A = torch.Tensor(np.array([[1, 0, 0.01, 0],[0, 1, 0, 0.01],[0, 0, 1, 0],[0, 0, 0, 1]]))
         self.B = torch.Tensor(np.array([[0, 0],[0, 0],[0.01, 0],[0, 0.01]]))

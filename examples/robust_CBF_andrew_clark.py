@@ -20,19 +20,33 @@ class Cruise_Environment:
         self.d = 3
         self.m = 1
 
+        self.K = 2500
+
         self.v_desire = 22
 
     def F_r(self, x):       #Used in dynamics
-        return self.f_0 + self.f_1 * x[0] + self.f_2 * x[0] ** 2
+        F_xn = []
+        for x_n in torch.transpose(x, 0, 1).split(1):
+            fx_n = self.f_0 + self.f_1 * x_n[0][0] + self.f_2 * x_n[0][0] ** 2
+            F_xn.append(-fx_n.item()/self.M)
+            # print(fx_n)
+        # print(F_xn)
+        return F_xn
         
+    def G_r(self, x):
+        G_xn = []
+        for x_n in torch.transpose(x, 0, 1).split(1):
+            g_xn = x_n[0][1] - x_n[0][2]
+            G_xn.append(g_xn.item())
+        return G_xn
 
     def dynamic(self, x, u):        #dynamic updates
-        print(-self.F_r(x)/self.M)
-        A = torch.Tensor(np.array([[-self.F_r(x)/self.M], [0.0], [x[1]-x[0]]]))
-        B = torch.Tensor(np.array([1/self.M], [0.0], [0.0]))
+        
+        A = torch.Tensor([self.F_r(x), [0.0]* self.K, self.G_r(x)])
+        B = torch.Tensor(np.array([[1/self.M], [0.0], [0.0]]))
         dW = torch.Tensor(np.random.normal(self.mu, self.sigma, size=(3,1)))
 
-        dx = torch.mm(A, x) + torch.mm(B, u) + dW
+        dx = A + torch.mm(B, u) + dW
         return x + self.dt * dx
     
     def cost_f(self, x, u):
@@ -78,7 +92,7 @@ class MPPI_control:
         self.mdl = Cruise_Environment()
         self.d = self.mdl.d
         self.m = self.mdl.m
-        self.K = 2500
+        self.K = self.mdl.K
         self.T = 20
         
         # 0. Initial control
@@ -88,8 +102,8 @@ class MPPI_control:
         self.x = torch.Tensor(np.zeros(self.d))
 
         # 2. Hyper parameter
-        self.mu = np.zeros(self.m)
-        self.sigma = np.eye(self.m)
+        self.mu = torch.Tensor(np.zeros(self.m))
+        self.sigma = torch.Tensor(np.eye(self.m))
 
         self.Lambda = 1.0
         self.control_limit = 10
@@ -101,6 +115,7 @@ class MPPI_control:
         # Step 0. Initilize the signals: (1) random explroation noise; (2) sum of cost, (3) state values
         x_init_dK = torch.transpose(self.x.repeat(self.K, 1), 0, 1) # Size (d, K)
         eps_TmK = torch.randn(self.T, self.m, self.K) # Size (T, m, K)
+        # eps_TmK = torch.normal(mean=self.mu, std=self.sigma, size=(self.T, self.m, self.K))
         S_K = torch.Tensor(np.zeros(self.K)) # Size (K)
         u_Tm = self.u_ts # Size (T, m)
         x_K = x_init_dK  # Size (d, K)
@@ -114,7 +129,7 @@ class MPPI_control:
             x_K_next = self.mdl.dynamic(x_K, u_K)
 
             C_K = self.mdl.cost_f(x_K, u_K)
-            S_K += C_K + self.Lambda*torch.mm(torch.mm(u_t.view(1, self.m), self.Sigma),eps_mK)
+            S_K += C_K + self.Lambda*torch.mm(torch.mm(u_t.view(1, self.m), self.sigma),eps_mK)
 
             x_K = x_K_next
         
