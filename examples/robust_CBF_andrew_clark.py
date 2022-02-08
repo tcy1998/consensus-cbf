@@ -29,8 +29,6 @@ class Cruise_Environment:
         for x_n in torch.transpose(x, 0, 1).split(1):
             fx_n = self.f_0 + self.f_1 * x_n[0][0] + self.f_2 * x_n[0][0] ** 2
             F_xn.append(-fx_n.item()/self.M)
-            # print(fx_n)
-        # print(F_xn)
         return F_xn
         
     def G_r(self, x):
@@ -41,8 +39,8 @@ class Cruise_Environment:
         return G_xn
 
     def dynamic(self, x, u):        #dynamic updates
-        
-        A = torch.Tensor([self.F_r(x), [0.0]* self.K, self.G_r(x)])
+        # print(x.size()[1])
+        A = torch.Tensor([self.F_r(x), [0.0]* x.size()[1], self.G_r(x)])
         B = torch.Tensor(np.array([[1/self.M], [0.0], [0.0]]))
         dW = torch.Tensor(np.random.normal(self.mu, self.sigma, size=(3,1)))
 
@@ -50,7 +48,27 @@ class Cruise_Environment:
         return x + self.dt * dx
     
     def cost_f(self, x, u):
-        return (1/2)* u ** 2
+        '''
+        Running cost
+        input:
+        x is tensor with size (d, K) where K is the number of sample trajectories.
+        u is tensor with size (m, K)
+        return:
+        cost is tensor with size K 
+        '''
+        # 0. Speed Error Cost
+        speed_tgt = 1.0 
+        C1 = (x[2]- speed_tgt)**2
+        # C2 = (4.0-x[0])**2 + (4.0-x[1])**2
+        C2 = 0
+
+
+        # 1. Possition Contraint with Indicator Functions
+        distance_from_center = (x[0]**2 + x[1]**2)**0.5
+        Ind0 = torch.where(distance_from_center > 2.125, torch.ones(C1.size()), torch.zeros(C1.size()))
+        Ind1 = torch.where(distance_from_center < 1.875, torch.ones(C1.size()), torch.zeros(C1.size()))
+        return C1 + C2 + 1000*(Ind0+Ind1)
+
 
     def terminal_f(self, x, u):
         return 0
@@ -129,7 +147,7 @@ class MPPI_control:
             x_K_next = self.mdl.dynamic(x_K, u_K)
 
             C_K = self.mdl.cost_f(x_K, u_K)
-            S_K += C_K + self.Lambda*torch.mm(torch.mm(u_t.view(1, self.m), self.sigma),eps_mK)
+            S_K = S_K + C_K + self.Lambda*torch.mm(torch.mm(u_t.view(1, self.m), self.sigma),eps_mK)
 
             x_K = x_K_next
         
@@ -151,6 +169,7 @@ class MPPI_control:
         for t in range(self.T):
             X.append(x.view(-1))
             u = U_T[t].view(self.m, 1)
+            # print(x.size())
             x_next = self.mdl.dynamic(x, u)
             x = x_next
         X = torch.stack(X)
@@ -177,7 +196,7 @@ class Environment(Cruise_Environment):
     
     def step(self, u):
         u = torch.clamp(u, -10, 10)
-        x_next = self.F(self.x, u.view(self.m, 1))
+        x_next = self.dynamic(self.x, u.view(self.m, 1))
         self.x = x_next
         return x_next
 
@@ -188,19 +207,18 @@ if __name__ == "__main__":
 
     obs = plant.reset()
 
-    x_s, y_s, vx_s, vy_s = [], [], [], []
+    x_s, y_s, z_s = [], [], []
 
     for t in range(500):
         U_np, X_np = mppi.control(obs) 
         u = torch.Tensor(U_np[0])
         obs = plant.step(u)
 
-        [x, y, vx, vy] = obs
+        [x, y, z] = obs
 
         x_s.append(x)
         y_s.append(y)
-        vx_s.append(vx)
-        vy_s.append(vy)
+        z_s.append(z)
 
     plt.plot(x_s, y_s, 'b+')
     plt.show()
