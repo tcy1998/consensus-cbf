@@ -225,5 +225,7 @@ if __name__ == "__main__":
         z_s.append(z)
 
     t = np.linspace(0,500*0.02,num=500)
-    plt.plot(x_s, y_s, 'b+')
+    plt.plot(x_s, t, 'b+')
+    plt.plot(y_s, t)
+    plt.plot(z_s, t)
     plt.show()
