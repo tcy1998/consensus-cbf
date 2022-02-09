@@ -24,7 +24,7 @@ class Cruise_Environment:
         self.d = 3
         self.m = 1
 
-        self.K = 2500
+        self.K = 500
 
         self.v_desire = 22
 
@@ -61,17 +61,17 @@ class Cruise_Environment:
         cost is tensor with size K 
         '''
         # 0. Speed Error Cost
-        speed_tgt = 1.0 
-        C1 = (x[2]- speed_tgt)**2
+        speed_tgt = 22
+        C1 = (x[0]- speed_tgt)**2
         # C2 = (4.0-x[0])**2 + (4.0-x[1])**2
-        C2 = 0
+        C2 = u**2
 
 
         # 1. Possition Contraint with Indicator Functions
         distance_from_center = (x[0]**2 + x[1]**2)**0.5
         Ind0 = torch.where(distance_from_center > 2.125, torch.ones(C1.size()), torch.zeros(C1.size()))
         Ind1 = torch.where(distance_from_center < 1.875, torch.ones(C1.size()), torch.zeros(C1.size()))
-        return C1 + C2 + 1000*(Ind0+Ind1)
+        return C1 + C2
 
 
     def terminal_f(self, x, u):
@@ -115,7 +115,7 @@ class MPPI_control:
         self.d = self.mdl.d
         self.m = self.mdl.m
         self.K = self.mdl.K
-        self.T = 20
+        self.T = 50
         
         # 0. Initial control
         self.u_ts = torch.Tensor(np.zeros((self.T, self.m)))
@@ -125,10 +125,10 @@ class MPPI_control:
 
         # 2. Hyper parameter
         self.mu = torch.Tensor(np.zeros(self.m))
-        self.sigma = torch.Tensor(np.eye(self.m))
+        self.sigma = torch.Tensor(np.eye(self.m))*10
 
-        self.Lambda = 1.0
-        self.control_limit = 10
+        self.Lambda = 10
+        self.control_limit = 100
 
     def control(self,x):
 
@@ -195,11 +195,12 @@ class Environment(Cruise_Environment):
         self.x = torch.Tensor(np.zeros((self.d, 1)))
 
     def reset(self):
-        self.x = torch.Tensor(np.zeros((self.d, 1)))
+        # self.x = torch.Tensor(np.zeros((self.d, 1)))
+        self.x = torch.Tensor(np.array([[18], [10], [150]]))
         return self.x
     
     def step(self, u):
-        u = torch.clamp(u, -10, 10)
+        # u = torch.clamp(u, -100, 100)
         x_next = self.dynamic(self.x, u.view(self.m, 1))
         self.x = x_next
         return x_next
@@ -208,24 +209,27 @@ if __name__ == "__main__":
 
     mppi = MPPI_control()
     plant = Environment()
+    time_steps = 200
 
     obs = plant.reset()
 
     x_s, y_s, z_s = [], [], []
 
-    for t in range(500):
+    for t in range(time_steps):
         U_np, X_np = mppi.control(obs) 
         u = torch.Tensor(U_np[0])
         obs = plant.step(u)
 
         [x, y, z] = obs
 
+        # print(obs, X_np, U_np)
+
         x_s.append(x)
         y_s.append(y)
         z_s.append(z)
 
-    t = np.linspace(0,500*0.02,num=500)
-    plt.plot(x_s, t, 'b+')
-    plt.plot(y_s, t)
-    plt.plot(z_s, t)
+    t = np.linspace(0,time_steps*0.02,num=time_steps)
+    plt.plot(t, x_s)
+    plt.plot(t, y_s)
+    # plt.plot(t, z_s)
     plt.show()
