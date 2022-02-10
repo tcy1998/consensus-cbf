@@ -5,82 +5,15 @@ import cvxpy as cp
 import torch
 import matplotlib.pyplot as plt
 import os
+from Unicycle_dynamic import Unicycle_dynamic
+from Cruise_dynamic import Cruise_Environment, Cruise_Dynamics
 
 os.environ['KMP_DUPLICATE_LIB_OK']='True'
-
-
-class Cruise_Environment:
-
-    def __init__(self):
-        self.f_0 = 0.1
-        self.f_1 = 5
-        self.f_2 = 0.25
-        self.M = 1650
-        self.dt = 0.02
-
-        self.mu = 0
-        self.sigma = 0.1
-
-        self.d = 3
-        self.m = 1
-
-        self.K = 500
-
-        self.v_desire = 22
-
-    def F_r(self, x):       #Used in dynamics
-        F_xn = []
-        for x_n in torch.transpose(x, 0, 1).split(1):
-            fx_n = self.f_0 + self.f_1 * x_n[0][0] + self.f_2 * x_n[0][0] ** 2
-            F_xn.append(-fx_n.item()/self.M)
-        return F_xn
-        
-    def G_r(self, x):
-        G_xn = []
-        for x_n in torch.transpose(x, 0, 1).split(1):
-            g_xn = x_n[0][1] - x_n[0][2]
-            G_xn.append(g_xn.item())
-        return G_xn
-
-    def dynamic(self, x, u):        #dynamic updates
-        # print(x.size()[1])
-        A = torch.Tensor([self.F_r(x), [0.0]* x.size()[1], self.G_r(x)])
-        B = torch.Tensor(np.array([[1/self.M], [0.0], [0.0]]))
-        dW = torch.Tensor(np.random.normal(self.mu, self.sigma, size=(3,1)))
-
-        dx = A + torch.mm(B, u) + dW
-        return x + self.dt * dx
-    
-    def cost_f(self, x, u):
-        '''
-        Running cost
-        input:
-        x is tensor with size (d, K) where K is the number of sample trajectories.
-        u is tensor with size (m, K)
-        return:
-        cost is tensor with size K 
-        '''
-        # 0. Speed Error Cost
-        speed_tgt = 22
-        C1 = (x[0]- speed_tgt)**2
-        # C2 = (4.0-x[0])**2 + (4.0-x[1])**2
-        C2 = u**2
-
-
-        # 1. Possition Contraint with Indicator Functions
-        distance_from_center = (x[0]**2 + x[1]**2)**0.5
-        Ind0 = torch.where(distance_from_center > 2.125, torch.ones(C1.size()), torch.zeros(C1.size()))
-        Ind1 = torch.where(distance_from_center < 1.875, torch.ones(C1.size()), torch.zeros(C1.size()))
-        return C1 + C2
-
-
-    def terminal_f(self, x, u):
-        return 0
 
 class cruise_robust_CBF:
 
     def __init__(self):
-        self.mdl = Cruise_Environment
+        self.mdl = Cruise_Dynamics
         self.d = self.mdl.d  #state dimension
         self.m = self.mdl.m  #control input dimension
         self.alpha = 1000   #hyperparameter for cbf
@@ -111,7 +44,7 @@ class cruise_robust_CBF:
 class MPPI_control:
 
     def __init__(self):
-        self.mdl = Cruise_Environment()
+        self.mdl = Cruise_Dynamics()
         self.d = self.mdl.d
         self.m = self.mdl.m
         self.K = self.mdl.K
@@ -127,7 +60,7 @@ class MPPI_control:
         self.mu = torch.Tensor(np.zeros(self.m))
         self.sigma = torch.Tensor(np.eye(self.m))*10
 
-        self.Lambda = 10
+        self.Lambda = 1
         self.control_limit = 100
 
     def control(self,x):
@@ -136,8 +69,7 @@ class MPPI_control:
 
         # Step 0. Initilize the signals: (1) random explroation noise; (2) sum of cost, (3) state values
         x_init_dK = torch.transpose(self.x.repeat(self.K, 1), 0, 1) # Size (d, K)
-        eps_TmK = torch.randn(self.T, self.m, self.K) # Size (T, m, K)
-        # eps_TmK = torch.normal(mean=self.mu, std=self.sigma, size=(self.T, self.m, self.K))
+        eps_TmK = torch.randn(self.T, self.m, self.K)*10 # Size (T, m, K)
         S_K = torch.Tensor(np.zeros(self.K)) # Size (K)
         u_Tm = self.u_ts # Size (T, m)
         x_K = x_init_dK  # Size (d, K)
@@ -188,27 +120,12 @@ class MPPI_control:
 
         return U_np, X_np
 
-class Environment(Cruise_Environment):
 
-    def __init__(self):
-        Cruise_Environment.__init__(self)
-        self.x = torch.Tensor(np.zeros((self.d, 1)))
-
-    def reset(self):
-        # self.x = torch.Tensor(np.zeros((self.d, 1)))
-        self.x = torch.Tensor(np.array([[18], [10], [150]]))
-        return self.x
-    
-    def step(self, u):
-        # u = torch.clamp(u, -100, 100)
-        x_next = self.dynamic(self.x, u.view(self.m, 1))
-        self.x = x_next
-        return x_next
 
 if __name__ == "__main__":
 
     mppi = MPPI_control()
-    plant = Environment()
+    plant = Cruise_Environment()
     time_steps = 200
 
     obs = plant.reset()
