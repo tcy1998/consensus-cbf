@@ -50,7 +50,7 @@ class Unicycle_dynamic:
         C2 = (self.obstacle_x - X[0])**2 + (self.obstacle_y - X[1])**2
         Ind2 = torch.where(C2<self.r**2, torch.ones(C1.size()), torch.zeros(C1.size()))
 
-        return 100 * C1 + 1000 * Ind2
+        return 100 * C1 #+ 1000 * Ind2
 
     def terminal_f(self, x, u):
         target_pos_x, target_pos_y = 4.0, 4.0

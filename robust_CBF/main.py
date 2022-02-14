@@ -1,12 +1,10 @@
 import numpy as np
-import cvxopt
-from cvxopt import matrix, solvers
-import cvxpy as cp
 import torch
 import matplotlib.pyplot as plt
 import os
 from Unicycle_dynamic import Unicycle_dynamic, Unicycle_Environment
 from Cruise_dynamic import Cruise_Environment, Cruise_Dynamics
+from Uncicyle_CBF import naive_CBF
 
 os.environ['KMP_DUPLICATE_LIB_OK']='True'
 
@@ -29,7 +27,7 @@ class MPPI_control:
 
         # 2. Hyper parameter
         self.mu = torch.Tensor(np.zeros(self.m))
-        self.sigma = torch.Tensor(np.eye(self.m))*10
+        self.sigma = torch.Tensor(np.eye(self.m))*0.1
 
         self.Lambda = 1
         self.control_limit = 100
@@ -100,23 +98,30 @@ if __name__ == "__main__":
     mppi = MPPI_control()
     # plant = Cruise_Environment()
     plant = Unicycle_Environment()
+    safe_control = naive_CBF()
     time_steps = 500
 
     obs = plant.reset()
 
     x_s, y_s, z_s = [], [], []
 
+    Use_CBF = True
+
     for t in range(time_steps):
         # print(obs)
-        U_np, X_np = mppi.control(obs) 
-        u = torch.Tensor(U_np[0])
-        print(u)
-        obs = plant.step(u)
-
         [x, y, z] = obs
-
-        # print(obs, X_np, U_np)
         dist =(plant.target_pos_x - x)**2 + (plant.target_pos_y - y)**2
+        # U_np, X_np = mppi.control(obs)
+        # u = torch.Tensor(U_np[0])
+
+        U_np = [[-10.0 * dist.data.numpy(), -10 * z.data.numpy()], [0,0]]
+        u = torch.Tensor(U_np[0])
+
+        print(u,obs,U_np[0])
+        if Use_CBF == True:
+            u += safe_control.CBF(obs.data.numpy(), U_np[0])
+        obs = plant.step(u)
+        
         if dist < 0.09:
             print(dist, x, y, t)
             break
@@ -130,6 +135,5 @@ if __name__ == "__main__":
     # plt.plot(t, z_s)
     plt.plot(x_s, y_s)
     circle1 = plt.Circle((plant.obstacle_x, plant.obstacle_y), plant.r, color='r')
-    # fig, ax = plt.subplots()
     plt.gca().add_patch(circle1)
     plt.show()
