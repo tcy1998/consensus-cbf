@@ -9,17 +9,29 @@ class Unicycle_dynamic:
         self.K = 2500   # The number of sample
 
         self.mu = 0     # The mean of the noise 
-        self.sigma = 0.1  # The variance of the noise
+        self.sigma = 0.01  # The variance of the noise
+
+        self.target_pos_x, self.target_pos_y = 4.0, 4.0
+        self.obstacle_x, self.obstacle_y = 2.0, 2.0
+        self.r = 0.5
 
     def dynamic(self, X, U):
+        '''
+        State transition model
+        input:
+        x is tensor with size (d, K) where K is the number of sample trajectories.
+        u is tensor with size (m, K)
+        return:
+        x_next is tensor with size(d, K) 
+        '''
         dW = torch.Tensor(np.random.normal(self.mu, self.sigma,\
             size=(self.d, 1))) # The noise of the dynamic size is (d,K)
         x_d = torch.cos(X[2]) * U[0]
-        y_d = torch.sin(X[2]) * U[0]
+        y_d = torch.sin(X[2]) * U[0]    #element wise product
         w_d = U[1]
-        print(x_d.size(), U[0].size())
+        # print(x_d.size(), U[0].size())
         X_d = torch.vstack((x_d, y_d, w_d))
-        X_new = X_d * self.t
+        X_new = X_d * self.t + dW
 
         return X + X_new
 
@@ -31,31 +43,33 @@ class Unicycle_dynamic:
         return:
         cost is tensor with size K 
         '''
+       
+        C1 = (self.target_pos_x - X[0])**2 + (self.target_pos_y - X[1])**2
+
+       
+        C2 = (self.obstacle_x - X[0])**2 + (self.obstacle_y - X[1])**2
+        Ind2 = torch.where(C2<self.r**2, torch.ones(C1.size()), torch.zeros(C1.size()))
+
+        return 100 * C1 + 1000 * Ind2
+
+    def terminal_f(self, x, u):
         target_pos_x, target_pos_y = 4.0, 4.0
-        C1 = (target_pos_x - X[0])**2 + (target_pos_y - X[1])**2
-
-        obstacle_x, obstacle_y = 2.0, 2.0
-        C2 = (obstacle_x - X[0])**2 + (obstacle_y - X[1])**2
-        Ind2 = torch.where(C2<0.25, torch.ones(C1.size()), torch.zeros(C1.size()))
-
-        return C1 + 100 * Ind2
-
-    def terminal_f(self, X, u):
-        target_pos_x, target_pos_y = 4.0, 4.0
-        C1 = (target_pos_x - X[0])**2 + (target_pos_y - X[1])**2
-        return C1
+        C = (target_pos_x - x[0])**2 + (target_pos_y - x[1])**2
+        return C
 
 class Unicycle_Environment(Unicycle_dynamic):
 
     def __init__(self):
         Unicycle_dynamic.__init__(self)
         self.x = torch.Tensor(np.zeros((self.d, 1)))
+        
 
     def reset(self):
-        self.x = torch.Tensor(np.array([[0],[0],[np.pi/4]]))
+        self.x = torch.Tensor(np.array([[0],[0],[np.pi/10]]))
         return self.x
 
     def step(self, u):
+        # u = torch.clamp(u, -10, 10)
         x_next = self.dynamic(self.x, u)
         self.x = x_next
         return x_next

@@ -40,7 +40,7 @@ class MPPI_control:
 
         # Step 0. Initilize the signals: (1) random explroation noise; (2) sum of cost, (3) state values
         x_init_dK = torch.transpose(self.x.repeat(self.K, 1), 0, 1) # Size (d, K)
-        eps_TmK = torch.randn(self.T, self.m, self.K)*10 # Size (T, m, K)
+        eps_TmK = torch.randn(self.T, self.m, self.K) # Size (T, m, K)
         S_K = torch.Tensor(np.zeros(self.K)) # Size (K)
         u_Tm = self.u_ts # Size (T, m)
         x_K = x_init_dK  # Size (d, K)
@@ -49,7 +49,8 @@ class MPPI_control:
             u_t = u_Tm[t]
             u_K = torch.transpose(u_t.repeat(self.K, 1), 0, 1)
             eps_mK = eps_TmK[t]
-            u_K = torch.clamp(u_K + eps_mK, -self.control_limit, self.control_limit)
+            # u_K = torch.clamp(u_K + eps_mK, -self.control_limit, self.control_limit)
+            u_K = u_K + eps_mK
             
             x_K_next = self.mdl.dynamic(x_K, u_K)
 
@@ -99,7 +100,7 @@ if __name__ == "__main__":
     mppi = MPPI_control()
     # plant = Cruise_Environment()
     plant = Unicycle_Environment()
-    time_steps = 200
+    time_steps = 500
 
     obs = plant.reset()
 
@@ -109,20 +110,26 @@ if __name__ == "__main__":
         # print(obs)
         U_np, X_np = mppi.control(obs) 
         u = torch.Tensor(U_np[0])
-        # print(u)
+        print(u)
         obs = plant.step(u)
 
         [x, y, z] = obs
 
         # print(obs, X_np, U_np)
-
+        dist =(plant.target_pos_x - x)**2 + (plant.target_pos_y - y)**2
+        if dist < 0.09:
+            print(dist, x, y, t)
+            break
         x_s.append(x)
         y_s.append(y)
         z_s.append(z)
 
-    t = np.linspace(0,time_steps*0.02,num=time_steps)
+    # t = np.linspace(0,time_steps*0.02,num=time_steps)
     # plt.plot(t, x_s)
     # plt.plot(t, y_s)
     # plt.plot(t, z_s)
     plt.plot(x_s, y_s)
+    circle1 = plt.Circle((plant.obstacle_x, plant.obstacle_y), plant.r, color='r')
+    # fig, ax = plt.subplots()
+    plt.gca().add_patch(circle1)
     plt.show()
