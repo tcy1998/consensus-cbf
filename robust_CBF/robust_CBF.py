@@ -5,46 +5,17 @@ import cvxpy as cp
 import torch
 import matplotlib.pyplot as plt
 import os
-from Unicycle_dynamic import Unicycle_dynamic
+from Unicycle_dynamic import Unicycle_dynamic, Unicycle_Environment
 from Cruise_dynamic import Cruise_Environment, Cruise_Dynamics
 
 os.environ['KMP_DUPLICATE_LIB_OK']='True'
-
-class cruise_robust_CBF:
-
-    def __init__(self):
-        self.mdl = Cruise_Dynamics
-        self.d = self.mdl.d  #state dimension
-        self.m = self.mdl.m  #control input dimension
-        self.alpha = 1000   #hyperparameter for cbf
-        self.M = 1650
-    
-    def cbf_h(self, x):     #cbf
-        return x[2] - 1.8 * x[0]
-    def partial_h (self, x):        #partial derivative of cbf
-        return np.matrix([-1.8], [0], [1])
-
-    def g_x(self, x):
-        return np.matrix([1/self.M], [0.0], [0.0])
-
-    def QP(self, x, u):     #using cvxpy to solve qp
-        h = self.cbf_h(x) + self.partial_h(x) * u
-        P = np.identity(self.m)
-        q = np.zeros(self.m)
-        g = - self.partial_h(x) * self.g_x(x)
-
-        u_opt = cp.Variable(self.m)
-        prob = cp.Problem(cp.Minimize((1/2)*cp.quad_form(x,P)+q.T @ u_opt)
-                        [g @ x <= h])
-        prob.solve()
-
-        return u_opt.value
 
 
 class MPPI_control:
 
     def __init__(self):
-        self.mdl = Cruise_Dynamics()
+        # self.mdl = Cruise_Dynamics()
+        self.mdl = Unicycle_dynamic()
         self.d = self.mdl.d
         self.m = self.mdl.m
         self.K = self.mdl.K
@@ -64,7 +35,7 @@ class MPPI_control:
         self.control_limit = 100
 
     def control(self,x):
-
+        print(x.size())
         self.x = x.view(self.d)
 
         # Step 0. Initilize the signals: (1) random explroation noise; (2) sum of cost, (3) state values
@@ -100,15 +71,15 @@ class MPPI_control:
         U_T = U_T + torch.sum(eps_TmK*omega_tilde, 2)/eta
 
         # Step 4. Forward Calculation
-        X = []
-        x = self.x.view(self.d, 1)
-        for t in range(self.T):
-            X.append(x.view(-1))
-            u = U_T[t].view(self.m, 1)
-            # print(x.size())
-            x_next = self.mdl.dynamic(x, u)
-            x = x_next
-        X = torch.stack(X)
+        # X = []
+        # x = self.x.view(self.d, 1)
+        # for t in range(self.T):
+        #     X.append(x.view(-1))
+        #     u = U_T[t].view(self.m, 1)
+        #     # print(x.size(), u.repeat(1,self.K).size())
+        #     x_next = self.mdl.dynamic(x, u.repeat(1,self.K))
+        #     x = x_next
+        # X = torch.stack(X)
 
         # Step 5. Update the controls
         self.u_ts[:-1] = U_T[1:]
@@ -116,7 +87,8 @@ class MPPI_control:
 
         # Step 6. return numpy array
         U_np = self.u_ts.data.numpy()
-        X_np = X.data.numpy()
+        # X_np = X.data.numpy()
+        X_np = []
 
         return U_np, X_np
 
@@ -125,7 +97,8 @@ class MPPI_control:
 if __name__ == "__main__":
 
     mppi = MPPI_control()
-    plant = Cruise_Environment()
+    # plant = Cruise_Environment()
+    plant = Unicycle_Environment()
     time_steps = 200
 
     obs = plant.reset()
@@ -133,8 +106,10 @@ if __name__ == "__main__":
     x_s, y_s, z_s = [], [], []
 
     for t in range(time_steps):
+        # print(obs)
         U_np, X_np = mppi.control(obs) 
         u = torch.Tensor(U_np[0])
+        # print(u)
         obs = plant.step(u)
 
         [x, y, z] = obs
@@ -146,7 +121,8 @@ if __name__ == "__main__":
         z_s.append(z)
 
     t = np.linspace(0,time_steps*0.02,num=time_steps)
-    plt.plot(t, x_s)
-    plt.plot(t, y_s)
+    # plt.plot(t, x_s)
+    # plt.plot(t, y_s)
     # plt.plot(t, z_s)
+    plt.plot(x_s, y_s)
     plt.show()
