@@ -14,6 +14,7 @@ class Unicycle_dynamic:
         self.target_pos_x, self.target_pos_y = 4.0, 4.0
         self.obstacle_x, self.obstacle_y = 2.0, 2.0
         self.r = 0.5
+        self.control_limit = 50
 
     def dynamic(self, X, U):
         '''
@@ -31,7 +32,7 @@ class Unicycle_dynamic:
         w_d = U[1]
         # print(x_d.size(), U[0].size())
         X_d = torch.vstack((x_d, y_d, w_d))
-        X_new = X_d * self.t + dW
+        X_new = X_d * self.t #+ dW
 
         return X + X_new
 
@@ -65,11 +66,11 @@ class Unicycle_Environment(Unicycle_dynamic):
         
 
     def reset(self):
-        self.x = torch.Tensor(np.array([[0],[0],[np.pi/10]]))
+        self.x = torch.Tensor(np.array([[0],[0],[np.pi/4]]))
         return self.x
 
     def step(self, u):
-        # u = torch.clamp(u, -10, 10)
+        u = torch.clamp(u, -self.control_limit, self.control_limit)
         x_next = self.dynamic(self.x, u)
         self.x = x_next
         return x_next

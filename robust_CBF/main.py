@@ -30,7 +30,7 @@ class MPPI_control:
         self.sigma = torch.Tensor(np.eye(self.m))*0.1
 
         self.Lambda = 1
-        self.control_limit = 100
+        self.control_limit = self.mdl.control_limit
 
     def control(self,x):
         print(x.size())
@@ -47,7 +47,7 @@ class MPPI_control:
             u_t = u_Tm[t]
             u_K = torch.transpose(u_t.repeat(self.K, 1), 0, 1)
             eps_mK = eps_TmK[t]
-            # u_K = torch.clamp(u_K + eps_mK, -self.control_limit, self.control_limit)
+            u_K = torch.clamp(u_K + eps_mK, -self.control_limit, self.control_limit)
             u_K = u_K + eps_mK
             
             x_K_next = self.mdl.dynamic(x_K, u_K)
@@ -109,19 +109,23 @@ if __name__ == "__main__":
 
     for t in range(time_steps):
         # print(obs)
-        [x, y, z] = obs
-        dist =(plant.target_pos_x - x)**2 + (plant.target_pos_y - y)**2
-        # U_np, X_np = mppi.control(obs)
+        
+        U_np, X_np = mppi.control(obs)
+        
+
+        # U_np = [[-10.0 * dist.data.numpy(), -10 * z.data.numpy()], [0,0]]
         # u = torch.Tensor(U_np[0])
 
-        U_np = [[-10.0 * dist.data.numpy(), -10 * z.data.numpy()], [0,0]]
-        u = torch.Tensor(U_np[0])
-
-        print(u,obs,U_np[0])
+        # print(obs,U_np[0])
         if Use_CBF == True:
-            u += safe_control.CBF(obs.data.numpy(), U_np[0])
+            # print(obs)
+            u_change = safe_control.CBF(obs.data.numpy(), U_np[0])
+            print(u_change)
+            U_np[0] += u_change
+        u = torch.Tensor(U_np[0])
         obs = plant.step(u)
-        
+        [x, y, z] = obs
+        dist =(plant.target_pos_x - x)**2 + (plant.target_pos_y - y)**2
         if dist < 0.09:
             print(dist, x, y, t)
             break
@@ -136,4 +140,7 @@ if __name__ == "__main__":
     plt.plot(x_s, y_s)
     circle1 = plt.Circle((plant.obstacle_x, plant.obstacle_y), plant.r, color='r')
     plt.gca().add_patch(circle1)
-    plt.show()
+    plt.draw()
+    plt.pause(1)
+    input("<Hit Enter>")
+    plt.close()

@@ -19,7 +19,7 @@ class MPPI():
         self.U = U
         self.u_init = [u_init,0]
         self.cost_total = np.zeros(shape=(self.K))
-        self.tau = 0.05
+        self.tau = 0.02
 
 
         # target parameters
@@ -44,9 +44,9 @@ class MPPI():
         self.R = matrix([1.0, 1.0, 1.0])
 
         self.use_cbf = False            #use cbf
-        self.constraint_use = True      #Orignal MPPI
+        self.constraint_use = False      #Orignal MPPI
         self.multi_ = False             #multi obstacles
-        self.naive_cbf = False
+        self.naive_cbf = True
         self.discounted_use = False
         self.alpha = 0.5
 
@@ -226,7 +226,7 @@ class MPPI():
         return np.exp(-factor * (cost - beta))
 
 
-    def control(self, iter=1000):
+    def control(self, iter=10000):
         
         for _ in range(iter):
             self.noise = np.random.multivariate_normal(self.noise_mu, self.noise_sigma, size=(self.K, self.T))
