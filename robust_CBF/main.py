@@ -107,26 +107,18 @@ if __name__ == "__main__":
 
     Use_CBF = True
 
-    for t in range(time_steps):
-        # print(obs)
-        
+    for t in range(time_steps):        
         U_np, X_np = mppi.control(obs)
         
-
-        # U_np = [[-10.0 * dist.data.numpy(), -10 * z.data.numpy()], [0,0]]
-        # u = torch.Tensor(U_np[0])
-
-        # print(obs,U_np[0])
         if Use_CBF == True:
-            # print(obs)
             u_change = safe_control.CBF(obs.data.numpy(), U_np[0])
             print(u_change)
             U_np[0] += u_change
         u = torch.Tensor(U_np[0])
-        obs = plant.step(u)
+        obs = plant.step(u)         #Update dynamics
         [x, y, z] = obs
         dist =(plant.target_pos_x - x)**2 + (plant.target_pos_y - y)**2
-        if dist < 0.09:
+        if dist < 0.09: #If the distance to the target is smaller than 0.3 stop
             print(dist, x, y, t)
             break
         x_s.append(x)
@@ -134,9 +126,6 @@ if __name__ == "__main__":
         z_s.append(z)
 
     # t = np.linspace(0,time_steps*0.02,num=time_steps)
-    # plt.plot(t, x_s)
-    # plt.plot(t, y_s)
-    # plt.plot(t, z_s)
     plt.plot(x_s, y_s)
     circle1 = plt.Circle((plant.obstacle_x, plant.obstacle_y), plant.r, color='r')
     plt.gca().add_patch(circle1)

@@ -38,6 +38,12 @@ class naive_CBF:
         # print("State", X[2])
         return u_opt.value
 
+class Robust_CBF:
+    def __init__(self):
+        self.mdl = Unicycle_dynamic()
+
+    # def 
+        
 
 if __name__ == "__main__":
     b = naive_CBF()
