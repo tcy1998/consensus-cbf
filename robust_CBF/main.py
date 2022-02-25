@@ -91,6 +91,22 @@ class MPPI_control:
 
         return U_np, X_np
 
+class classic_controller():
+    def __init__(self):
+        self.mdl = Unicycle_dynamic()
+        self.kp = -10.0
+        self.kd = -4.0
+    
+    def k_func(self, x1, x2):
+        zeta, beta = -100, 100
+        return 2*zeta*np.sqrt(x1**2 + beta*x2**2)
+
+    def unicycle_control(self, x):
+        x_error = self.mdl.target_pos_x - x[0]
+        y_error = self.mdl.target_pos_y - x[1]
+        return 
+
+
 
 
 if __name__ == "__main__":
@@ -112,11 +128,12 @@ if __name__ == "__main__":
         
         if Use_CBF == True:
             u_change = safe_control.CBF(obs.data.numpy(), U_np[0])
-            print(u_change)
             U_np[0] += u_change
         u = torch.Tensor(U_np[0])
         obs = plant.step(u)         #Update dynamics
         [x, y, z] = obs
+
+        
         dist =(plant.target_pos_x - x)**2 + (plant.target_pos_y - y)**2
         if dist < 0.09: #If the distance to the target is smaller than 0.3 stop
             print(dist, x, y, t)

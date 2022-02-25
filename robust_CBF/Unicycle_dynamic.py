@@ -32,7 +32,7 @@ class Unicycle_dynamic:
         w_d = U[1]
         # print(x_d.size(), U[0].size())
         X_d = torch.vstack((x_d, y_d, w_d))
-        X_new = X_d * self.t #+ dW
+        X_new = X_d * self.t + dW
 
         return X + X_new
 
