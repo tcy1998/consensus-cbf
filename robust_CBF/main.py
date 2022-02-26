@@ -132,7 +132,6 @@ if __name__ == "__main__":
         u = torch.Tensor(U_np[0])
         obs = plant.step(u)         #Update dynamics
         [x, y, z] = obs
-
         
         dist =(plant.target_pos_x - x)**2 + (plant.target_pos_y - y)**2
         if dist < 0.09: #If the distance to the target is smaller than 0.3 stop

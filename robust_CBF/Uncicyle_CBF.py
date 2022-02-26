@@ -13,7 +13,16 @@ class naive_CBF:
         value = (-self.mdl.obstacle_x + X[0])**2 +\
                 (-self.mdl.obstacle_y + X[1])**2 -\
                 self.mdl.r**2
-        return self.alpha * value #+ 2
+        return self.alpha * value
+
+    def dist(self,X):
+        value = np.sqrt((-self.mdl.obstacle_x + X[0])**2 +\
+                        (-self.mdl.obstacle_y + X[1])**2)
+        return value
+
+    def cbf_h1(self,X):
+        value =  self.dist(X) - self.mdl.r
+        return value
 
     def g_x(self, X):   # 3x2 matrix
         return np.matrix([[np.cos(X[2]), 0.0], \
@@ -24,13 +33,24 @@ class naive_CBF:
         x1 = -self.mdl.obstacle_x + X[0]
         x2 = -self.mdl.obstacle_y + X[1]
         return np.matrix([[2*x1, 2*x2, 0]])
+    
+    def tr_hessian_h(self,X):
+        return 4
+
+    def partial_h1(self,X):
+        x1 = -self.mdl.obstacle_x + X[0]
+        x2 = -self.mdl.obstacle_y + X[1]
+        return np.matrix([[x1/self.dist(X), x2/self.dist(X), 0]])
+    
+    def tr_hessian_h1(self,X):
+        return 3/self.dist(X)
 
     def CBF(self,X,U):
         P = np.matrix([[1.0,0.0],[0.0,1.0]])
         q = np.matrix([[0.0], [0.0]])
-        g = np.matmul(self.partial_h(X), self.g_x(X))   #1*2 vector
-        h = self.cbf_h(X) + np.matmul(g,U) - 0.02  #value
-        print(h)
+        g = np.matmul(self.partial_h1(X), self.g_x(X))   #1*2 vector
+        h = self.cbf_h1(X) + np.matmul(g,U) - 0.5*self.tr_hessian_h1(X)*(self.mdl.sigma**2)  #value
+        # print(h)
         u_opt = cp.Variable(self.mdl.m)
         prob = cp.Problem(cp.Minimize(cp.quad_form(u_opt,P)),
                         [-g @ u_opt <= h])

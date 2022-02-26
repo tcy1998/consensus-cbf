@@ -3,13 +3,13 @@ import torch
 
 class Unicycle_dynamic:
     def __init__(self):
-        self.t = 0.02   # The frequency set to 50hz
+        self.dt = 0.02   # The frequency set to 50hz
         self.d = 3      # The imension of state
         self.m = 2      # The dimension of control input
         self.K = 2500   # The number of sample
 
-        self.mu = 0     # The mean of the noise 
-        self.sigma = 0.01  # The variance of the noise
+        self.mu = 0.0     # The mean of the noise 
+        self.sigma = 0.4  # The sigma function of the Brownian Motion
 
         self.target_pos_x, self.target_pos_y = 4.0, 4.0
         self.obstacle_x, self.obstacle_y = 2.0, 2.0
@@ -25,14 +25,14 @@ class Unicycle_dynamic:
         return:
         x_next is tensor with size(d, K) 
         '''
-        dW = torch.Tensor(np.random.normal(self.mu, self.sigma,\
+        dW = torch.Tensor(np.random.normal(self.mu, self.dt,\
             size=(self.d, 1))) # The noise of the dynamic size is (d,K)
         x_d = torch.cos(X[2]) * U[0]
         y_d = torch.sin(X[2]) * U[0]    #element wise product
         w_d = U[1]
         # print(x_d.size(), U[0].size())
         X_d = torch.vstack((x_d, y_d, w_d))
-        X_new = X_d * self.t + dW
+        X_new = X_d * self.dt + dW * self.sigma
 
         return X + X_new
 
