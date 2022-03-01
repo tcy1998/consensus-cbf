@@ -33,7 +33,6 @@ class MPPI_control:
         self.control_limit = self.mdl.control_limit
 
     def control(self,x):
-        print(x.size())
         self.x = x.view(self.d)
 
         # Step 0. Initilize the signals: (1) random explroation noise; (2) sum of cost, (3) state values
@@ -91,22 +90,26 @@ class MPPI_control:
 
         return U_np, X_np
 
-class classic_controller():
-    def __init__(self):
-        self.mdl = Unicycle_dynamic()
-        self.kp = -10.0
-        self.kd = -4.0
-    
-    def k_func(self, x1, x2):
-        zeta, beta = -100, 100
-        return 2*zeta*np.sqrt(x1**2 + beta*x2**2)
-
-    def unicycle_control(self, x):
-        x_error = self.mdl.target_pos_x - x[0]
-        y_error = self.mdl.target_pos_y - x[1]
-        return 
-
-
+    def circle_plot(self, state_x, state_y):
+        if self.mdl.obstacle_type == 'circle':
+            plt.plot(state_x, state_y)
+            circle1 = plt.Circle((self.mdl.obstacle_x, self.mdl.obstacle_y),\
+                self.mdl.r, color='r')
+            plt.gca().add_patch(circle1)
+            plt.draw()
+            plt.pause(1)
+            input("<Hit Enter>")
+            plt.close()
+        if self.mdl.obstacle_type == 'sin':
+            plt.plot(state_x, state_y)
+            x = np.arange(0,1,0.01)
+            y = np.sin(2 * np.pi * x)
+            plt.plot(x, y)
+            plt.plot(x, y+self.mdl.width)
+            plt.draw()
+            plt.pause(1)
+            input("<Hit Enter>")
+            plt.close()
 
 
 if __name__ == "__main__":
@@ -133,8 +136,9 @@ if __name__ == "__main__":
         obs = plant.step(u)         #Update dynamics
         [x, y, z] = obs
         
+        #If the distance to the target is smaller than 0.3 stop
         dist =(plant.target_pos_x - x)**2 + (plant.target_pos_y - y)**2
-        if dist < 0.09: #If the distance to the target is smaller than 0.3 stop
+        if dist < 0.01: 
             print(dist, x, y, t)
             break
         x_s.append(x)
@@ -142,10 +146,4 @@ if __name__ == "__main__":
         z_s.append(z)
 
     # t = np.linspace(0,time_steps*0.02,num=time_steps)
-    plt.plot(x_s, y_s)
-    circle1 = plt.Circle((plant.obstacle_x, plant.obstacle_y), plant.r, color='r')
-    plt.gca().add_patch(circle1)
-    plt.draw()
-    plt.pause(1)
-    input("<Hit Enter>")
-    plt.close()
+    mppi.circle_plot(x_s, y_s)

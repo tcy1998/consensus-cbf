@@ -1,20 +1,28 @@
 import numpy as np
 import torch
+import math
 
 class Unicycle_dynamic:
     def __init__(self):
         self.dt = 0.02   # The frequency set to 50hz
         self.d = 3      # The imension of state
         self.m = 2      # The dimension of control input
-        self.K = 2500   # The number of sample
+        self.K = 2500 * 2  # The number of sample
 
         self.mu = 0.0     # The mean of the noise 
-        self.sigma = 0.4  # The sigma function of the Brownian Motion
+        self.sigma = 0.2  # The sigma function of the Brownian Motion
+        self.obstacle_type = 'sin'
 
-        self.target_pos_x, self.target_pos_y = 4.0, 4.0
-        self.obstacle_x, self.obstacle_y = 2.0, 2.0
-        self.r = 0.5
-        self.control_limit = 50
+        if self.obstacle_type == 'circle':
+            self.target_pos_x, self.target_pos_y = 4.0, 4.0
+            self.obstacle_x, self.obstacle_y = 2.0, 2.0
+            self.r = 0.5
+            self.control_limit = 50
+
+        if self.obstacle_type == 'sin':
+            self.target_pos_x, self.target_pos_y = 1.0, 0.5
+            self.control_limit = 10
+            self.width = 1
 
     def dynamic(self, X, U):
         '''
@@ -32,7 +40,7 @@ class Unicycle_dynamic:
         w_d = U[1]
         # print(x_d.size(), U[0].size())
         X_d = torch.vstack((x_d, y_d, w_d))
-        X_new = X_d * self.dt + dW * self.sigma
+        X_new = X_d * self.dt #+ dW * self.sigma
 
         return X + X_new
 
@@ -44,14 +52,19 @@ class Unicycle_dynamic:
         return:
         cost is tensor with size K 
         '''
-       
-        C1 = (self.target_pos_x - X[0])**2 + (self.target_pos_y - X[1])**2
+        if self.obstacle_type == 'circle':
+            C1 = (self.target_pos_x - X[0])**2 + (self.target_pos_y - X[1])**2
+            C2 = (self.obstacle_x - X[0])**2 + (self.obstacle_y - X[1])**2
+            Ind2 = torch.where(C2<self.r**2, torch.ones(C1.size()), torch.zeros(C1.size()))
 
-       
-        C2 = (self.obstacle_x - X[0])**2 + (self.obstacle_y - X[1])**2
-        Ind2 = torch.where(C2<self.r**2, torch.ones(C1.size()), torch.zeros(C1.size()))
+            return 1 * C1 + 1000 * Ind2
+        
+        if self.obstacle_type == 'sin':
+            C1 = (self.target_pos_x - X[0])**2 + (self.target_pos_y - X[1])**2
+            Ind1 = torch.where(X[1]<torch.sin(2*np.pi*X[0]),  torch.ones(C1.size()), torch.zeros(C1.size()))
+            Ind2 = torch.where(X[1]>torch.sin(2*np.pi*X[0])+self.width,  torch.ones(C1.size()), torch.zeros(C1.size()))
 
-        return 100 * C1 #+ 1000 * Ind2
+            return 1 * C1 + 10000 * (Ind1 + Ind2)
 
     def terminal_f(self, x, u):
         target_pos_x, target_pos_y = 4.0, 4.0
@@ -66,7 +79,7 @@ class Unicycle_Environment(Unicycle_dynamic):
         
 
     def reset(self):
-        self.x = torch.Tensor(np.array([[0],[0],[np.pi/4]]))
+        self.x = torch.Tensor(np.array([[0],[0.5],[np.pi/4]]))
         return self.x
 
     def step(self, u):
@@ -74,16 +87,3 @@ class Unicycle_Environment(Unicycle_dynamic):
         x_next = self.dynamic(self.x, u)
         self.x = x_next
         return x_next
-
-
-if __name__ == "__main__":
-
-    mdl = Unicycle_dynamic()
-    x = torch.Tensor(np.zeros((mdl.d, mdl.K)))
-    u = torch.Tensor(np.zeros((mdl.m, mdl.K)))
-    State = []
-    for t in range(500):
-        x_next = mdl.dynamic(x, u)
-        State.append(x_next)
-
-    # print(State.size())
