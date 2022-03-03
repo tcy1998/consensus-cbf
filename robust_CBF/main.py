@@ -7,7 +7,7 @@ from Cruise_dynamic import Cruise_Environment, Cruise_Dynamics
 from Uncicyle_CBF import naive_CBF
 from SDP_CBF import SDP_CBF
 
-os.environ['KMP_DUPLICATE_LIB_OK']='True'
+# os.environ['KMP_DUPLICATE_LIB_OK']='True'
 
 
 class MPPI_control:
