@@ -7,11 +7,12 @@ class Unicycle_dynamic:
         self.dt = 0.02   # The frequency set to 50hz
         self.d = 3      # The imension of state
         self.m = 2      # The dimension of control input
-        self.K = 2500 * 2  # The number of sample
+        self.K = 250  # The number of sample
 
         self.mu = 0.0     # The mean of the noise 
         self.sigma = 0.2  # The sigma function of the Brownian Motion
-        self.obstacle_type = 'sin'
+        self.obstacle_type = 'circle'
+        self.use_robust = False
 
         if self.obstacle_type == 'circle':
             self.target_pos_x, self.target_pos_y = 4.0, 4.0

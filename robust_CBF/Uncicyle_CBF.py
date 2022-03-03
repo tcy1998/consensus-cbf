@@ -8,7 +8,7 @@ class naive_CBF:
     def __init__(self):
         self.mdl = Unicycle_dynamic()
         self.alpha = 1.0
-        self.use_robust = False
+        self.use_robust = self.mdl.use_robust
         self.obstacle_type = self.mdl.obstacle_type
 
     def g_x(self, X):   # 3x2 matrix

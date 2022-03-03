@@ -5,6 +5,7 @@ import os
 from Unicycle_dynamic import Unicycle_dynamic, Unicycle_Environment
 from Cruise_dynamic import Cruise_Environment, Cruise_Dynamics
 from Uncicyle_CBF import naive_CBF
+from SDP_CBF import SDP_CBF
 
 os.environ['KMP_DUPLICATE_LIB_OK']='True'
 
@@ -31,6 +32,8 @@ class MPPI_control:
 
         self.Lambda = 1
         self.control_limit = self.mdl.control_limit
+        
+        self.SDP_CBF = SDP_CBF()
 
     def control(self,x):
         self.x = x.view(self.d)
@@ -45,7 +48,10 @@ class MPPI_control:
         for t in range(self.T):
             u_t = u_Tm[t]
             u_K = torch.transpose(u_t.repeat(self.K, 1), 0, 1)
-            eps_mK = eps_TmK[t]
+            eps_mK = eps_TmK[t]     #size (m, K)
+            # print(x_K.T[0].size())
+            mu, sigma = self.SDP_CBF.SDP(x_K.data.numpy())
+            
             u_K = torch.clamp(u_K + eps_mK, -self.control_limit, self.control_limit)
             u_K = u_K + eps_mK
             
@@ -124,7 +130,7 @@ if __name__ == "__main__":
 
     x_s, y_s, z_s = [], [], []
 
-    Use_CBF = True
+    Use_CBF = False
 
     for t in range(time_steps):        
         U_np, X_np = mppi.control(obs)
