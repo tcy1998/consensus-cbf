@@ -7,7 +7,7 @@ from Cruise_dynamic import Cruise_Environment, Cruise_Dynamics
 from Uncicyle_CBF import naive_CBF
 from SDP_CBF import SDP_CBF
 
-# os.environ['KMP_DUPLICATE_LIB_OK']='True'
+os.environ['KMP_DUPLICATE_LIB_OK']='True'
 
 
 class MPPI_control:
@@ -18,7 +18,7 @@ class MPPI_control:
         self.d = self.mdl.d
         self.m = self.mdl.m
         self.K = self.mdl.K
-        self.T = 50
+        self.T = self.mdl.T
         
         # 0. Initial control
         self.u_ts = torch.Tensor(np.zeros((self.T, self.m)))
@@ -40,17 +40,20 @@ class MPPI_control:
 
         # Step 0. Initilize the signals: (1) random explroation noise; (2) sum of cost, (3) state values
         x_init_dK = torch.transpose(self.x.repeat(self.K, 1), 0, 1) # Size (d, K)
-        eps_TmK = torch.randn(self.T, self.m, self.K) # Size (T, m, K)
-        S_K = torch.Tensor(np.zeros(self.K)) # Size (K)
-        u_Tm = self.u_ts # Size (T, m)
-        x_K = x_init_dK  # Size (d, K)
+        # eps_TmK = torch.randn(self.T, self.m, self.K) # Size (T, m, K)
+        eps_TmK = torch.zeros(self.T, self.m, self.K)
+        S_K = torch.Tensor(np.zeros(self.K))            # Size (K)
+        u_Tm = self.u_ts                                # Size (T, m)
+        x_K = x_init_dK                                 # Size (d, K)
 
         for t in range(self.T):
             u_t = u_Tm[t]
             u_K = torch.transpose(u_t.repeat(self.K, 1), 0, 1)
-            eps_mK = eps_TmK[t]     #size (m, K)
-            # print(x_K.T[0].size())
-            mu, sigma = self.SDP_CBF.SDP(x_K.data.numpy())
+            # eps_mK = eps_TmK[t]     #size (m, K)
+            # print(eps_mK.size())
+            eps_mK  = self.SDP_CBF.SDP(x_K.data.numpy())
+            eps_mK = torch.tensor(np.transpose(eps_mK)).float()
+            eps_TmK[t] = eps_mK
             
             u_K = torch.clamp(u_K + eps_mK, -self.control_limit, self.control_limit)
             u_K = u_K + eps_mK

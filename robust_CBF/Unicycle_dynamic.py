@@ -4,10 +4,11 @@ import math
 
 class Unicycle_dynamic:
     def __init__(self):
-        self.dt = 0.02   # The frequency set to 50hz
-        self.d = 3      # The imension of state
-        self.m = 2      # The dimension of control input
-        self.K = 250  # The number of sample
+        self.dt = 0.02      # The frequency set to 50hz
+        self.d = 3          # The imension of state
+        self.m = 2          # The dimension of control input
+        self.K = 250        # The number of sample
+        self.T = 25         # The length of timestep
 
         self.mu = 0.0     # The mean of the noise 
         self.sigma = 0.2  # The sigma function of the Brownian Motion
@@ -58,7 +59,7 @@ class Unicycle_dynamic:
             C2 = (self.obstacle_x - X[0])**2 + (self.obstacle_y - X[1])**2
             Ind2 = torch.where(C2<self.r**2, torch.ones(C1.size()), torch.zeros(C1.size()))
 
-            return 1 * C1 + 1000 * Ind2
+            return 1 * C1 #+ 1000 * Ind2
         
         if self.obstacle_type == 'sin':
             C1 = (self.target_pos_x - X[0])**2 + (self.target_pos_y - X[1])**2

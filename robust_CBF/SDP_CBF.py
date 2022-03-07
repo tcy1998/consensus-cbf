@@ -52,7 +52,8 @@ class SDP_CBF:
         A = np.zeros((self.K, self.m*self.K))
         B = np.zeros((self.K, 1))
         
-        mean, variance = [], []
+        # mean, variance = [], []
+        U_delta = []        #return the Control input size (m,K)
 
         start_time = time.time()
         for i in range(self.K):
@@ -68,12 +69,12 @@ class SDP_CBF:
             objective = cp.Minimize(cp.trace(v)+cp.norm(m,1)) 
             prob = cp.Problem(objective, constraints)
             prob.solve()
-            mean.append(m.value)
-            variance.append(v.value)
-        print(np.shape(mean), np.shape(variance))
-
-        #     A[i][self.m*i:self.m*(i+1)] = a[0]
-        #     B[i] = b
+            mu = np.squeeze(m.value)
+            var = v.value
+            delta_u = np.random.multivariate_normal(mu.T, var)
+            U_delta.append(delta_u)
+            # A[i][self.m*i:self.m*(i+1)] = a[0]
+            # B[i] = b      
 
         
         # variance = cp.Variable((self.m*self.K, self.m*self.K), PSD=True)
@@ -83,8 +84,8 @@ class SDP_CBF:
         # prob = cp.Problem(objective, constraints)
         # prob.solve()
 
-        print("--- %s seconds ---" % (time.time() - start_time))
+        # print("--- %s seconds ---" % (time.time() - start_time))
 
 
         # return mean.value, variance.value
-        return mean, variance
+        return U_delta
