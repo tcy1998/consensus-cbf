@@ -48,44 +48,29 @@ class SDP_CBF:
             h2 = self.mdl.width - X[1] + np.sin(2*np.pi*X[0])
             return np.matrix([[h1[0]],[h2[0]]])
 
-    def SDP(self, X):
-        A = np.zeros((self.K, self.m*self.K))
-        B = np.zeros((self.K, 1))
-        
-        # mean, variance = [], []
+    def SDP(self, X, U):
         U_delta = []        #return the Control input size (m,K)
 
-        start_time = time.time()
+        # start_time = time.time()
         for i in range(self.K):
             state = X.T[i]      # 3x1 vector
+            u = U.reshape(2,1)
             g_value = self.g_x(state)
             partialh_value = self.partial_h(state)
             a = np.matmul(partialh_value, g_value)
-            b = self.cbf_h(state)
+            b = self.cbf_h(state) + a @ u
 
             v = cp.Variable((self.m, self.m), PSD=True)
             m = cp.Variable((self.m, 1))
-            constraints = [a @ v @ a.T+ a @ m >> b, v >> 0]
-            objective = cp.Minimize(cp.trace(v)+cp.norm(m,1)) 
+            constraints = [-a @ v @ a.T + a @ m >> -b, v >> 0]
+            objective = cp.Minimize(cp.norm(v-np.identity(2),2)+cp.norm(m,2)) 
             prob = cp.Problem(objective, constraints)
             prob.solve()
             mu = np.squeeze(m.value)
             var = v.value
             delta_u = np.random.multivariate_normal(mu.T, var)
             U_delta.append(delta_u)
-            # A[i][self.m*i:self.m*(i+1)] = a[0]
-            # B[i] = b      
-
-        
-        # variance = cp.Variable((self.m*self.K, self.m*self.K), PSD=True)
-        # mean = cp.Variable((self.m*self.K, 1))
-        # constraints = [A @ variance @ A.T+ A @ mean >> B, variance >> 0]
-        # objective = cp.Minimize(cp.trace(variance)+cp.norm(mean,1)) 
-        # prob = cp.Problem(objective, constraints)
-        # prob.solve()
+            # print(delta_u, mu, var)
 
         # print("--- %s seconds ---" % (time.time() - start_time))
-
-
-        # return mean.value, variance.value
         return U_delta

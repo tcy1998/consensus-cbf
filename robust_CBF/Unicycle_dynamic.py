@@ -7,8 +7,8 @@ class Unicycle_dynamic:
         self.dt = 0.02      # The frequency set to 50hz
         self.d = 3          # The imension of state
         self.m = 2          # The dimension of control input
-        self.K = 250        # The number of sample
-        self.T = 25         # The length of timestep
+        self.K = 200        # The number of sample
+        self.T = 20         # The length of timestep
 
         self.mu = 0.0     # The mean of the noise 
         self.sigma = 0.2  # The sigma function of the Brownian Motion
@@ -17,9 +17,9 @@ class Unicycle_dynamic:
 
         if self.obstacle_type == 'circle':
             self.target_pos_x, self.target_pos_y = 4.0, 4.0
-            self.obstacle_x, self.obstacle_y = 2.0, 2.0
+            self.obstacle_x, self.obstacle_y = 2.2, 2.0
             self.r = 0.5
-            self.control_limit = 50
+            self.control_limit = 20
 
         if self.obstacle_type == 'sin':
             self.target_pos_x, self.target_pos_y = 1.0, 0.5
@@ -42,7 +42,7 @@ class Unicycle_dynamic:
         w_d = U[1]
         # print(x_d.size(), U[0].size())
         X_d = torch.vstack((x_d, y_d, w_d))
-        X_new = X_d * self.dt #+ dW * self.sigma
+        X_new = X_d * self.dt + dW * self.sigma
 
         return X + X_new
 
@@ -71,7 +71,7 @@ class Unicycle_dynamic:
     def terminal_f(self, x, u):
         target_pos_x, target_pos_y = 4.0, 4.0
         C = (target_pos_x - x[0])**2 + (target_pos_y - x[1])**2
-        return C
+        return 100*C
 
 class Unicycle_Environment(Unicycle_dynamic):
 
@@ -81,7 +81,7 @@ class Unicycle_Environment(Unicycle_dynamic):
         
 
     def reset(self):
-        self.x = torch.Tensor(np.array([[0],[0.5],[np.pi/4]]))
+        self.x = torch.Tensor(np.array([[0],[0.0],[np.pi/4]]))
         return self.x
 
     def step(self, u):

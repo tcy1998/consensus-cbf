@@ -21,14 +21,14 @@ class MPPI_control:
         self.T = self.mdl.T
         
         # 0. Initial control
-        self.u_ts = torch.Tensor(np.zeros((self.T, self.m)))
+        self.u_ts = torch.Tensor(np.ones((self.T, self.m)))
 
         # 1.Initial State 
         self.x = torch.Tensor(np.zeros(self.d))
 
         # 2. Hyper parameter
         self.mu = torch.Tensor(np.zeros(self.m))
-        self.sigma = torch.Tensor(np.eye(self.m))*0.1
+        self.sigma = torch.Tensor(np.eye(self.m))
 
         self.Lambda = 1
         self.control_limit = self.mdl.control_limit
@@ -49,14 +49,14 @@ class MPPI_control:
         for t in range(self.T):
             u_t = u_Tm[t]
             u_K = torch.transpose(u_t.repeat(self.K, 1), 0, 1)
-            # eps_mK = eps_TmK[t]     #size (m, K)
-            # print(eps_mK.size())
-            eps_mK  = self.SDP_CBF.SDP(x_K.data.numpy())
+            # print(u_t.size(), u_K.size())
+            eps_mK  = self.SDP_CBF.SDP(x_K.data.numpy(), u_t.data.numpy())
             eps_mK = torch.tensor(np.transpose(eps_mK)).float()
             eps_TmK[t] = eps_mK
             
             u_K = torch.clamp(u_K + eps_mK, -self.control_limit, self.control_limit)
             u_K = u_K + eps_mK
+            # print(u_K)
             
             x_K_next = self.mdl.dynamic(x_K, u_K)
 
@@ -74,7 +74,7 @@ class MPPI_control:
 
         # Step 3. Calculate control input.
         U_T = self.u_ts
-        print(np.shape(eps_TmK),np.shape(omega_tilde))
+        # print(np.shape(eps_TmK),np.shape(omega_tilde))
         U_T = U_T + torch.sum(eps_TmK*omega_tilde, 2)/eta
 
         # Step 4. Forward Calculation
@@ -127,7 +127,7 @@ if __name__ == "__main__":
     # plant = Cruise_Environment()
     plant = Unicycle_Environment()
     safe_control = naive_CBF()
-    time_steps = 500
+    time_steps = 100
 
     obs = plant.reset()
 
@@ -137,19 +137,26 @@ if __name__ == "__main__":
 
     for t in range(time_steps):        
         U_np, X_np = mppi.control(obs)
+
+        [x, y, z] = obs
+        dist =(plant.target_pos_x - x)**2 + (plant.target_pos_y - y)**2
+        if dist < 0.09: 
+            print(dist, x, y, t)
+            break
         
         if Use_CBF == True:
             u_change = safe_control.CBF(obs.data.numpy(), U_np[0])
             U_np[0] += u_change
         u = torch.Tensor(U_np[0])
         obs = plant.step(u)         #Update dynamics
-        [x, y, z] = obs
+        
+        print(t, x, y)
+        # converge = (obs[0] - x)**2 + (obs[1] - y)**2
+        # if converge < 0.01:
+        #     break
         
         #If the distance to the target is smaller than 0.3 stop
-        dist =(plant.target_pos_x - x)**2 + (plant.target_pos_y - y)**2
-        if dist < 0.01: 
-            print(dist, x, y, t)
-            break
+
         x_s.append(x)
         y_s.append(y)
         z_s.append(z)
