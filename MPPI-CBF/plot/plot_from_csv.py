@@ -9,6 +9,14 @@ from cvxopt import matrix
 import matplotlib.cm as cm
 from matplotlib.colors import Normalize
 # import matplotlib as mpl
+import os
+
+# Get the current working directory
+cwd = os.getcwd()
+os.chdir('/Users/chuyuantao/Documents/research/consensus-cbf/MPPI-CBF/plot')
+
+# Print the current working directory
+print("Current working directory: {0}".format(cwd))
 
 def calculate_cost(data):
     cost = 0
@@ -134,13 +142,13 @@ def sample_multi_data_plot(dataname):
     ax.set_aspect(1)
     plt.show()
 
-sample_data_plot('100sample_20steps_single_MPPI_7timestep.csv')
-sample_data_plot('100sample_20steps_single_CBF_7timestep.csv')
+# sample_data_plot('100sample_20steps_single_MPPI_7timestep.csv')
+# sample_data_plot('100sample_20steps_single_CBF_7timestep.csv')
 
 
 
-sample_multi_data_plot('100sample_40steps_multi_MPPI_7timestep.csv')
-sample_multi_data_plot('100sample_20steps_multi_CBF_7timestep.csv')
+# sample_multi_data_plot('100sample_40steps_multi_MPPI_7timestep.csv')
+# sample_multi_data_plot('100sample_20steps_multi_CBF_7timestep.csv')
 
 
 
@@ -157,7 +165,7 @@ plt.figure(figsize=(8,8))
 plt.plot(np.transpose(CBF_500)[0], np.transpose(CBF_500)[1],label='500 samples')
 plt.plot(np.transpose(CBF_200)[0], np.transpose(CBF_200)[1],label='200 samples')
 plt.plot(np.transpose(CBF_100)[0], np.transpose(CBF_100)[1],label='100 samples')
-plt.plot(np.transpose(CBF_50)[0], np.transpose(CBF_50)[1],label='50 samples')
+# plt.plot(np.transpose(CBF_50)[0], np.transpose(CBF_50)[1],label='50 samples')
 circle1 = plt.Circle((obstcle_x, obstcle_y), r, color='k', fill=False)
 ax = plt.gca()
 ax.add_artist(circle1)
@@ -206,13 +214,13 @@ plt.show()
 MPPI_500 = loadtxt('500sample_20steps_single_MPPI.csv',delimiter=',')
 MPPI_200 = loadtxt('200sample_20steps_single_MPPI.csv', delimiter=',')
 MPPI_100 = loadtxt('100sample_20steps_single_MPPI.csv', delimiter=',')
-MPPI_50 = loadtxt('50sample_20steps_single_MPPI.csv', delimiter=',')
+# MPPI_50 = loadtxt('50sample_20steps_single_MPPI.csv', delimiter=',')
 
 plt.figure(figsize=(8,8))
 plt.plot(np.transpose(MPPI_500)[0], np.transpose(MPPI_500)[1],label='500 samples')
 plt.plot(np.transpose(MPPI_200)[0], np.transpose(MPPI_200)[1],label='200 samples')
 plt.plot(np.transpose(MPPI_100)[0], np.transpose(MPPI_100)[1],label='100 samples')
-plt.plot(np.transpose(MPPI_50)[0], np.transpose(MPPI_50)[1],label='50 samples')
+# plt.plot(np.transpose(MPPI_50)[0], np.transpose(MPPI_50)[1],label='50 samples')
 circle1 = plt.Circle((obstcle_x, obstcle_y), r, color='k', fill=False)
 ax = plt.gca()
 ax.add_artist(circle1)
@@ -232,11 +240,11 @@ plt.figure(figsize=(8,8))
 plt.plot(plot_time(MPPI_500), state_cost(MPPI_500),label='500 samples MPPI')
 plt.plot(plot_time(MPPI_200), state_cost(MPPI_200),label='200 samples MPPI')
 plt.plot(plot_time(MPPI_100), state_cost(MPPI_100),label='100 samples MPPI')
-plt.plot(plot_time(MPPI_50), state_cost(MPPI_50),label='50 samples MPPI')
+# plt.plot(plot_time(MPPI_50), state_cost(MPPI_50),label='50 samples MPPI')
 plt.plot(plot_time(CBF_500), state_cost(CBF_500),label='500 samples MPPI-CBF')
 plt.plot(plot_time(CBF_200), state_cost(CBF_200),label='200 samples MPPI-CBF')
 plt.plot(plot_time(CBF_100), state_cost(CBF_100),label='100 samples MPPI-CBF')
-plt.plot(plot_time(CBF_50), state_cost(CBF_50),label='50 samples MPPI-CBF')
+# plt.plot(plot_time(CBF_50), state_cost(CBF_50),label='50 samples MPPI-CBF')
 ax = plt.gca()
 legend = ax.legend(loc='upper right', shadow=True, fontsize='x-large')
 ax.set_xlabel('Time horizon', fontsize=18)

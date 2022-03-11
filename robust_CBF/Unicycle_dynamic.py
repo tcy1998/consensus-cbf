@@ -12,7 +12,7 @@ class Unicycle_dynamic:
 
         self.mu = 0.0     # The mean of the noise 
         self.sigma = 0.2  # The sigma function of the Brownian Motion
-        self.obstacle_type = 'circle'
+        self.obstacle_type = 'sin'
         self.use_robust = False
 
         if self.obstacle_type == 'circle':
@@ -66,7 +66,7 @@ class Unicycle_dynamic:
             Ind1 = torch.where(X[1]<torch.sin(2*np.pi*X[0]),  torch.ones(C1.size()), torch.zeros(C1.size()))
             Ind2 = torch.where(X[1]>torch.sin(2*np.pi*X[0])+self.width,  torch.ones(C1.size()), torch.zeros(C1.size()))
 
-            return 1 * C1 + 10000 * (Ind1 + Ind2)
+            return 1 * C1 #+ 10000 * (Ind1 + Ind2)
 
     def terminal_f(self, x, u):
         target_pos_x, target_pos_y = 4.0, 4.0
@@ -81,7 +81,7 @@ class Unicycle_Environment(Unicycle_dynamic):
         
 
     def reset(self):
-        self.x = torch.Tensor(np.array([[0],[0.0],[np.pi/4]]))
+        self.x = torch.Tensor(np.array([[0.0],[0.5],[np.pi/4]]))
         return self.x
 
     def step(self, u):
