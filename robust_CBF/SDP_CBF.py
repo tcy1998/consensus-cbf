@@ -66,7 +66,7 @@ class SDP_CBF:
             objective = cp.Minimize(cp.norm(v-np.identity(2),2)+cp.norm(m,2)) 
             prob = cp.Problem(objective, constraints)
             prob.solve()
-            print(m.value)
+            # print(m.value)
             mu = np.squeeze(m.value)
             var = v.value
             delta_u = np.random.multivariate_normal(mu.T, var)
