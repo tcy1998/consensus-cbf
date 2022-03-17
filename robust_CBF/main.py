@@ -6,6 +6,7 @@ from Unicycle_dynamic import Unicycle_dynamic, Unicycle_Environment
 from Cruise_dynamic import Cruise_Environment, Cruise_Dynamics
 from Uncicyle_CBF import naive_CBF
 from SDP_CBF import SDP_CBF
+from numpy import savetxt
 
 os.environ['KMP_DUPLICATE_LIB_OK']='True'
 
@@ -101,7 +102,7 @@ class MPPI_control:
 
         return U_np, X_np
 
-    def circle_plot(self, state_x, state_y):
+    def plot(self, state_x, state_y):
         if self.mdl.obstacle_type == 'circle':
             plt.plot(state_x, state_y)
             circle1 = plt.Circle((self.mdl.obstacle_x, self.mdl.obstacle_y),\
@@ -129,7 +130,7 @@ if __name__ == "__main__":
     # plant = Cruise_Environment()
     plant = Unicycle_Environment()
     safe_control = naive_CBF()
-    time_steps = 250
+    time_steps = 1
 
     obs = plant.reset()
 
@@ -160,4 +161,5 @@ if __name__ == "__main__":
         y_s.append(y)
         z_s.append(z)
 
-    mppi.circle_plot(x_s, y_s)
+    mppi.plot(x_s, y_s)
+    savetxt('{}sample_{}steps_{}_CBF.csv'.format(plant.K,plant.T,plant.obstacle_type), obs, delimiter=',')
