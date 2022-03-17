@@ -153,9 +153,6 @@ if __name__ == "__main__":
         obs = plant.step(u)         #Update dynamics
         
         print(t, x, y)
-        # converge = (obs[0] - x)**2 + (obs[1] - y)**2
-        # if converge < 0.01:
-        #     break
         
         #If the distance to the target is smaller than 0.3 stop
 
@@ -163,5 +160,4 @@ if __name__ == "__main__":
         y_s.append(y)
         z_s.append(z)
 
-    # t = np.linspace(0,time_steps*0.02,num=time_steps)
     mppi.circle_plot(x_s, y_s)

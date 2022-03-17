@@ -8,11 +8,11 @@ class Unicycle_dynamic:
         self.d = 3          # The imension of state
         self.m = 2          # The dimension of control input
         self.K = 200        # The number of sample
-        self.T = 2         # The length of timestep
+        self.T = 20         # The length of timestep
 
         self.mu = 0.0     # The mean of the noise 
         self.sigma = 0.2  # The sigma function of the Brownian Motion
-        self.obstacle_type = 'sin'
+        self.obstacle_type = 'circle'
         self.use_robust = False
 
         if self.obstacle_type == 'circle':
@@ -66,7 +66,7 @@ class Unicycle_dynamic:
             Ind1 = torch.where(X[1]<torch.sin(0.5*np.pi*X[0]),  torch.ones(C1.size()), torch.zeros(C1.size()))
             Ind2 = torch.where(X[1]>torch.sin(0.5*np.pi*X[0])+self.width,  torch.ones(C1.size()), torch.zeros(C1.size()))
 
-            return 1 * C1 + 10000 * (Ind1 + Ind2)
+            return 1 * C1 #+ 10000 * (Ind1 + Ind2)
 
     def terminal_f(self, x, u):
         # target_pos_x, target_pos_y = 4.0, 4.0
