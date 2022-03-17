@@ -12,7 +12,7 @@ class Unicycle_dynamic:
 
         self.mu = 0.0     # The mean of the noise 
         self.sigma = 0.2  # The sigma function of the Brownian Motion
-        self.obstacle_type = 'circle'
+        self.obstacle_type = 'sin'
         self.use_robust = False
 
         if self.obstacle_type == 'circle':

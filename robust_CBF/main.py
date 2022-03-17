@@ -129,7 +129,7 @@ if __name__ == "__main__":
     # plant = Cruise_Environment()
     plant = Unicycle_Environment()
     safe_control = naive_CBF()
-    time_steps = 100
+    time_steps = 250
 
     obs = plant.reset()
 
