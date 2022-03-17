@@ -21,7 +21,7 @@ class MPPI_control:
         self.T = self.mdl.T
         
         # 0. Initial control
-        self.u_ts = torch.Tensor(np.ones((self.T, self.m)))
+        self.u_ts = torch.Tensor(np.zeros((self.T, self.m)))
 
         # 1.Initial State 
         self.x = torch.Tensor(np.zeros(self.d))
@@ -53,6 +53,8 @@ class MPPI_control:
             eps_mK  = self.SDP_CBF.SDP(x_K.data.numpy(), u_t.data.numpy())
             eps_mK = torch.tensor(np.transpose(eps_mK)).float()
             eps_TmK[t] = eps_mK
+
+            # eps_mK = eps_TmK[t]
             
             u_K = torch.clamp(u_K + eps_mK, -self.control_limit, self.control_limit)
             u_K = u_K + eps_mK
@@ -111,8 +113,8 @@ class MPPI_control:
             plt.close()
         if self.mdl.obstacle_type == 'sin':
             plt.plot(state_x, state_y)
-            x = np.arange(0,1,0.01)
-            y = np.sin(2 * np.pi * x)
+            x = np.arange(0,4,0.01)
+            y = np.sin(0.5 * np.pi * x)
             plt.plot(x, y)
             plt.plot(x, y+self.mdl.width)
             plt.draw()

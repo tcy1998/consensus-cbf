@@ -30,8 +30,8 @@ class SDP_CBF:
             return np.matrix([[2*x1, 2*x2, 0]])
 
         if self.obstacle_type == 'sin':
-            x1 = - 2*np.pi*np.cos(2*np.pi*X[0])
-            x2 = 2*np.pi*np.cos(2*np.pi*X[0])
+            x1 = - 0.5*np.pi*np.cos(0.5*np.pi*X[0])
+            x2 = 0.5*np.pi*np.cos(0.5*np.pi*X[0])
             return np.matrix([[x1, 1, 0], [x2, -1, 0]])
 
     def cbf_h(self,X):  # fixed value
@@ -44,8 +44,8 @@ class SDP_CBF:
             else:
                 return self.alpha * value + 0.0001
         if self.obstacle_type == 'sin':
-            h1 = X[1] - np.sin(2*np.pi*X[0])
-            h2 = self.mdl.width - X[1] + np.sin(2*np.pi*X[0])
+            h1 = X[1] - np.sin(0.5*np.pi*X[0])
+            h2 = self.mdl.width - X[1] + np.sin(0.5*np.pi*X[0])
             return np.matrix([[h1],[h2]])
 
     def SDP(self, X, U):
@@ -62,11 +62,10 @@ class SDP_CBF:
 
             v = cp.Variable((self.m, self.m), PSD=True)
             m = cp.Variable((self.m, 1))
-            constraints = [-3*a @ v @ a.T + a @ m >> -b, v >> 0]
+            constraints = [-1*a @ v @ a.T + a @ m >> -b, v >> 0]
             objective = cp.Minimize(cp.norm(v-np.identity(2),2)+cp.norm(m,2)) 
             prob = cp.Problem(objective, constraints)
-            prob.solve()
-            # print(m.value)
+            prob.solve(solver=cp.CVXOPT)
             mu = np.squeeze(m.value)
             var = v.value
             delta_u = np.random.multivariate_normal(mu.T, var)

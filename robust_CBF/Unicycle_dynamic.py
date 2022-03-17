@@ -8,11 +8,11 @@ class Unicycle_dynamic:
         self.d = 3          # The imension of state
         self.m = 2          # The dimension of control input
         self.K = 200        # The number of sample
-        self.T = 20         # The length of timestep
+        self.T = 2         # The length of timestep
 
         self.mu = 0.0     # The mean of the noise 
         self.sigma = 0.2  # The sigma function of the Brownian Motion
-        self.obstacle_type = 'circle'
+        self.obstacle_type = 'sin'
         self.use_robust = False
 
         if self.obstacle_type == 'circle':
@@ -22,8 +22,8 @@ class Unicycle_dynamic:
             self.control_limit = 20
 
         if self.obstacle_type == 'sin':
-            self.target_pos_x, self.target_pos_y = 1.0, 0.5
-            self.control_limit = 10
+            self.target_pos_x, self.target_pos_y = 4.0, 0.5
+            self.control_limit = 100
             self.width = 1
 
     def dynamic(self, X, U):
@@ -63,14 +63,14 @@ class Unicycle_dynamic:
         
         if self.obstacle_type == 'sin':
             C1 = (self.target_pos_x - X[0])**2 + (self.target_pos_y - X[1])**2
-            Ind1 = torch.where(X[1]<torch.sin(2*np.pi*X[0]),  torch.ones(C1.size()), torch.zeros(C1.size()))
-            Ind2 = torch.where(X[1]>torch.sin(2*np.pi*X[0])+self.width,  torch.ones(C1.size()), torch.zeros(C1.size()))
+            Ind1 = torch.where(X[1]<torch.sin(0.5*np.pi*X[0]),  torch.ones(C1.size()), torch.zeros(C1.size()))
+            Ind2 = torch.where(X[1]>torch.sin(0.5*np.pi*X[0])+self.width,  torch.ones(C1.size()), torch.zeros(C1.size()))
 
-            return 1 * C1 #+ 10000 * (Ind1 + Ind2)
+            return 1 * C1 + 10000 * (Ind1 + Ind2)
 
     def terminal_f(self, x, u):
-        target_pos_x, target_pos_y = 4.0, 4.0
-        C = (target_pos_x - x[0])**2 + (target_pos_y - x[1])**2
+        # target_pos_x, target_pos_y = 4.0, 4.0
+        C = (self.target_pos_x - x[0])**2 + (self.target_pos_y - x[1])**2
         return 100*C
 
 class Unicycle_Environment(Unicycle_dynamic):
@@ -81,7 +81,7 @@ class Unicycle_Environment(Unicycle_dynamic):
         
 
     def reset(self):
-        self.x = torch.Tensor(np.array([[0.0],[0.5],[np.pi/4]]))
+        self.x = torch.Tensor(np.array([[0.0],[0.5],[0]]))
         return self.x
 
     def step(self, u):
