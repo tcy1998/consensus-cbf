@@ -26,6 +26,4 @@ def plot_sample(dataname):
 
 
 # plot_sample('robust_CBF/data_plot/B200sample_20steps_sin_MPPI_20220317-172405.npy')
-a = np.load('robust_CBF\data_plot\B200sample_20steps_sin_CBF_20220317-222242.npy')
-print(np.shape(a))
-# plot_sample('robust_CBF/data_plot/B200sample_20steps_sin_CBF_20220317-222242.npy')
+plot_sample('robust_CBF\data_plot\B200sample_20steps_sin_CBF_20220317-230801.npy')
