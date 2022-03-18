@@ -77,17 +77,6 @@ class MPPI_control:
         # print(np.shape(eps_TmK),np.shape(omega_tilde))
         U_T = U_T + torch.sum(eps_TmK*omega_tilde, 2)/eta
 
-        # Step 4. Forward Calculation
-        # X = []
-        # x = self.x.view(self.d, 1)
-        # for t in range(self.T):
-        #     X.append(x.view(-1))
-        #     u = U_T[t].view(self.m, 1)
-        #     # print(x.size(), u.repeat(1,self.K).size())
-        #     x_next = self.mdl.dynamic(x, u.repeat(1,self.K))
-        #     x = x_next
-        # X = torch.stack(X)
-
         # Step 5. Update the controls
         self.u_ts[:-1] = U_T[1:]
         self.u_ts[-1] = torch.Tensor(np.zeros((self.m)))
@@ -109,6 +98,7 @@ class MPPI_control:
         S_K = torch.Tensor(np.zeros(self.K))            # Size (K)
         u_Tm = self.u_ts                                # Size (T, m)
         x_K = x_init_dK                                 # Size (d, K)
+        state_sample = torch.Tensor(np.zeros((self.T, self.d, self.K)))
 
         for t in range(self.T):
             u_t = u_Tm[t]
@@ -121,6 +111,7 @@ class MPPI_control:
             u_K = u_K + eps_mK
             
             x_K_next = self.mdl.dynamic(x_K, u_K)
+            state_sample[t] = x_K_next
 
             C_K = self.mdl.cost_f(x_K, u_K)
             S_K = S_K + C_K + self.Lambda*torch.mm(torch.mm(u_t.view(1, self.m), self.sigma),eps_mK)
@@ -139,17 +130,6 @@ class MPPI_control:
         # print(np.shape(eps_TmK),np.shape(omega_tilde))
         U_T = U_T + torch.sum(eps_TmK*omega_tilde, 2)/eta
 
-        # Step 4. Forward Calculation
-        # X = []
-        # x = self.x.view(self.d, 1)
-        # for t in range(self.T):
-        #     X.append(x.view(-1))
-        #     u = U_T[t].view(self.m, 1)
-        #     # print(x.size(), u.repeat(1,self.K).size())
-        #     x_next = self.mdl.dynamic(x, u.repeat(1,self.K))
-        #     x = x_next
-        # X = torch.stack(X)
-
         # Step 5. Update the controls
         self.u_ts[:-1] = U_T[1:]
         self.u_ts[-1] = torch.Tensor(np.zeros((self.m)))
@@ -157,7 +137,7 @@ class MPPI_control:
         # Step 6. return numpy array
         U_np = self.u_ts.data.numpy()
         # X_np = X.data.numpy()
-        X_np = []
+        X_np = state_sample.data.numpy()
 
         return U_np, X_np
 
@@ -189,7 +169,7 @@ if __name__ == "__main__":
     # plant = Cruise_Environment()
     plant = Unicycle_Environment()
     safe_control = naive_CBF()
-    time_steps = 250
+    time_steps = 2
 
     obs = plant.reset()
 
