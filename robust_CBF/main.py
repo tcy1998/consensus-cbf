@@ -191,7 +191,7 @@ if __name__ == "__main__":
 
         [x, y, z] = obs
         dist =(plant.target_pos_x - x)**2 + (plant.target_pos_y - y)**2
-        if dist < 0.09: 
+        if dist < 0.15**2: 
             print(dist, x, y, t)
             break
 
