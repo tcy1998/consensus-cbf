@@ -98,12 +98,25 @@ def multi_cost():
 
     plt.show()
 
-# def compute_error(data, data_name):
-
-
+def performance(data, data_name):
+    trajectories = loadtxt(data, delimiter=',')
+    trajectories = trajectories.T
+    violation = 0.0
+    for i in range(len(trajectories)):
+        state_x, state_y = trajectories[i][0], trajectories[i][1]
+        Ind1 = np.where(state_y<np.sin(0.5*np.pi*state_x), 1, 0)
+        Ind2 = np.where(state_y>np.sin(0.5*np.pi*state_x)+dynamic.width,  1, 0)
+        violation += Ind1 + Ind2
+    rate = violation/(len(trajectories))
+    print(1-rate)
 
 # plot_sample('robust_CBF/data_plot/B200sample_20steps_sin_MPPI_20220317-172405.npy')
-plot_sample('robust_CBF/data_plot/B200sample_20steps_sin_CBF_20220318-004220.npy')
+# plot_sample('robust_CBF/data_plot/B200sample_20steps_sin_CBF_20220318-004220.npy')
 # plot_sample('robust_CBF/data_plot/B200sample_20steps_sin_CBF_20220320-002409.npy')
 # multi_sin_plot()
 # multi_cost()
+performance('robust_CBF/data_plot/A500sample_20steps_sin_CBF_20220320-090119.csv','500 samples MPPI-CBF')
+performance('robust_CBF/data_plot/A500sample_20steps_sin_MPPI_20220320-144139.csv', '500 samples MPPI')
+performance('robust_CBF/data_plot/A4000sample_20steps_sin_MPPI_20220320-144230.csv', '4000 samples MPPI')
+performance('robust_CBF/data_plot/A1000sample_20steps_sin_MPPI_20220320-144201.csv', '1000 samples MPPI')
+
