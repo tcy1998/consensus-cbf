@@ -7,8 +7,8 @@ class Unicycle_dynamic:
         self.dt = 0.02      # The frequency set to 50hz
         self.d = 3          # The imension of state
         self.m = 2          # The dimension of control input
-        self.K = 500        # The number of sample
-        self.T = 20         # The length of timestep
+        self.K = 5000        # The number of sample
+        self.T = 40         # The length of timestep
 
         self.mu = 0.0     # The mean of the noise 
         self.sigma = 0.2  # The sigma function of the Brownian Motion
