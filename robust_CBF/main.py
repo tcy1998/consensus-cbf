@@ -176,7 +176,7 @@ if __name__ == "__main__":
     x_s, y_s, z_s = [], [], []
     Sample = []
 
-    Use_CBF = False
+    Use_CBF = True
     Collect_sample = True
 
 
