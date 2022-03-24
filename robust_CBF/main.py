@@ -174,6 +174,7 @@ if __name__ == "__main__":
     obs = plant.reset()
 
     x_s, y_s, z_s = [], [], []
+    v_s, w_s = [], []
     Sample = []
 
     Use_CBF = True
@@ -205,6 +206,8 @@ if __name__ == "__main__":
         x_s.append(x)
         y_s.append(y)
         z_s.append(z)
+        v_s.append(u[0])
+        w_s.append(u[1])
 
     mppi.plot(x_s, y_s)
     
@@ -221,7 +224,9 @@ if __name__ == "__main__":
     print(np.shape(Sample))
     if Use_CBF == True:
         savetxt('robust_CBF/data_plot/A{}sample_{}steps_{}_CBF_{}.csv'.format(plant.K,plant.T,plant.obstacle_type,timestr), [x_s, y_s], delimiter=',')
+        savetxt('robust_CBF/data_plot/C{}sample_{}steps_{}_CBF_{}.csv'.format(plant.K,plant.T,plant.obstacle_type,timestr), [z_s, v_s, w_s], delimiter=',')
         np.save('robust_CBF/data_plot/B{}sample_{}steps_{}_CBF_{}'.format(plant.K,plant.T,plant.obstacle_type,timestr), Sample)
     else:
         savetxt('robust_CBF/data_plot/A{}sample_{}steps_{}_MPPI_{}.csv'.format(plant.K,plant.T,plant.obstacle_type,timestr), [x_s, y_s], delimiter=',')
+        savetxt('robust_CBF/data_plot/C{}sample_{}steps_{}_MPPI_{}.csv'.format(plant.K,plant.T,plant.obstacle_type,timestr), [z_s, v_s, w_s], delimiter=',')
         np.save('robust_CBF/data_plot/B{}sample_{}steps_{}_MPPI_{}'.format(plant.K,plant.T,plant.obstacle_type,timestr), Sample)
