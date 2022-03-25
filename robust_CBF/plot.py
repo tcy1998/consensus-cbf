@@ -62,7 +62,7 @@ def plot_sample(dataname):
         for j in range(len(sample)):
             trajectory = sample[j]
             plt.plot(trajectory[0], trajectory[1], color='deepskyblue', linewidth=0.05)
-        plt.show()
+        
     x = np.arange(0,4,0.01)
     y = np.sin(0.5 * np.pi * x)
     plt.plot(x, y, color='r', label='obstacles')
@@ -74,6 +74,27 @@ def plot_sample(dataname):
     ax.set_ylabel('y-position')
     plt.legend(loc="upper right")
     plt.show()
+
+def plot_sample_single(dataname):
+    loadedarray = np.load(dataname)
+    print(np.shape(loadedarray), len(loadedarray))
+    for i in range(len(loadedarray)):
+        sample = loadedarray[i].T
+        if i == 20:
+            for j in range(len(sample)):
+                trajectory = sample[j]
+                plt.plot(trajectory[0], trajectory[1], color='deepskyblue', linewidth=0.05)
+        
+            x = np.arange(0,4,0.01)
+            y = np.sin(0.5 * np.pi * x)
+            plt.plot(x, y, color='r', label='obstacles')
+            plt.plot(x, y+1, color='r')
+            ax = plt.gca()
+            ax.grid(True)
+            ax.set_xlabel('x-position')
+            ax.set_ylabel('y-position')
+        
+            plt.show()
 
 def calculate_cost(data, data_name):
     trajectories = loadtxt(data, delimiter=',')
@@ -90,33 +111,29 @@ def multi_cost():
     calculate_cost('robust_CBF/data_plot/A400sample_20steps_sin_CBF_20220320-090135.csv', '400 samples MPPI-CBF')
     calculate_cost('robust_CBF/data_plot/A300sample_20steps_sin_CBF_20220320-142155.csv', '300 samples MPPI-CBF')
     calculate_cost('robust_CBF/data_plot/A200sample_20steps_sin_CBF_20220320-002409.csv', '200 samples MPPI-CBF')
+    calculate_cost('robust_CBF/data_plot/A4000sample_20steps_sin_MPPI_20220320-144230.csv', '4000 samples MPPI')
     calculate_cost('robust_CBF/data_plot/A1000sample_20steps_sin_MPPI_20220320-144201.csv', '1000 samples MPPI')
     calculate_cost('robust_CBF/data_plot/A500sample_20steps_sin_MPPI_20220320-144139.csv', '500 samples MPPI')
-    calculate_cost('robust_CBF/data_plot/A4000sample_20steps_sin_MPPI_20220320-144230.csv', '4000 samples MPPI')
+    
     ax = plt.gca()
+    ax.grid(True)
     legend = ax.legend(loc='upper right', shadow=True, fontsize='medium')
-
+    ax.set_xlabel('x-position')
+    ax.set_ylabel('y-position')
+   
+    timestr = time.strftime("%Y%m%d-%H%M%S")
+    plt.savefig('robust_CBF/data_plot/multi_cost_{}.eps'.format(timestr), format='eps')
     plt.show()
 
-def performance(data, data_name):
-    trajectories = loadtxt(data, delimiter=',')
-    trajectories = trajectories.T
-    violation = 0.0
-    for i in range(len(trajectories)):
-        state_x, state_y = trajectories[i][0], trajectories[i][1]
-        Ind1 = np.where(state_y<np.sin(0.5*np.pi*state_x), 1, 0)
-        Ind2 = np.where(state_y>np.sin(0.5*np.pi*state_x)+dynamic.width,  1, 0)
-        violation += Ind1 + Ind2
-    rate = violation/(len(trajectories))
-    print(1-rate)
+# def compute_error(data, data_name):
+
+
 
 # plot_sample('robust_CBF/data_plot/B200sample_20steps_sin_MPPI_20220317-172405.npy')
 # plot_sample('robust_CBF/data_plot/B200sample_20steps_sin_CBF_20220318-004220.npy')
 # plot_sample('robust_CBF/data_plot/B200sample_20steps_sin_CBF_20220320-002409.npy')
 # multi_sin_plot()
-# multi_cost()
-performance('robust_CBF/data_plot/A500sample_20steps_sin_CBF_20220320-090119.csv','500 samples MPPI-CBF')
-performance('robust_CBF/data_plot/A500sample_20steps_sin_MPPI_20220320-144139.csv', '500 samples MPPI')
-performance('robust_CBF/data_plot/A4000sample_20steps_sin_MPPI_20220320-144230.csv', '4000 samples MPPI')
-performance('robust_CBF/data_plot/A1000sample_20steps_sin_MPPI_20220320-144201.csv', '1000 samples MPPI')
+multi_cost()
 
+# plot_sample_single('robust_CBF/data_plot/B200sample_20steps_sin_CBF_20220318-004220.npy')
+# plot_sample_single('robust_CBF/data_plot/B500sample_20steps_sin_CBF_20220324-032131.npy')
