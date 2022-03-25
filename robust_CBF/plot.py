@@ -142,5 +142,6 @@ def check_control(data, data_name):
 # multi_cost()
 check_control('robust_CBF/data_plot/C500sample_20steps_sin_CBF_20220324-032131.csv', 'control_MPPI_CBF_500_sample')
 check_control('robust_CBF/data_plot/C500sample_20steps_sin_CBF_20220323-210943.csv', 'control_MPPI_CBF_500_sample')
+check_control('robust_CBF/data_plot/C200sample_20steps_sin_MPPI_20220324-235015.csv', 'control_MPPI_200_sample')
 # plot_sample_single('robust_CBF/data_plot/B200sample_20steps_sin_CBF_20220318-004220.npy')
 # plot_sample_single('robust_CBF/data_plot/B500sample_20steps_sin_CBF_20220324-032131.npy')
