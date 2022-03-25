@@ -125,15 +125,22 @@ def multi_cost():
     plt.savefig('robust_CBF/data_plot/multi_cost_{}.eps'.format(timestr), format='eps')
     plt.show()
 
-# def compute_error(data, data_name):
-
+def check_control(data, data_name):
+    control = loadtxt(data, delimiter=',')
+    time_stpes = len(control.T)
+    print(time_stpes)
+    t = np.linspace(0, time_stpes*dynamic.dt, num=time_stpes)
+    plt.plot(t, control[1], label=data_name)
+    plt.plot(t, control[0])
+    plt.show()
 
 
 # plot_sample('robust_CBF/data_plot/B200sample_20steps_sin_MPPI_20220317-172405.npy')
 # plot_sample('robust_CBF/data_plot/B200sample_20steps_sin_CBF_20220318-004220.npy')
 # plot_sample('robust_CBF/data_plot/B200sample_20steps_sin_CBF_20220320-002409.npy')
 # multi_sin_plot()
-multi_cost()
-
+# multi_cost()
+check_control('robust_CBF/data_plot/C500sample_20steps_sin_CBF_20220324-032131.csv', 'control_MPPI_CBF_500_sample')
+check_control('robust_CBF/data_plot/C500sample_20steps_sin_CBF_20220323-210943.csv', 'control_MPPI_CBF_500_sample')
 # plot_sample_single('robust_CBF/data_plot/B200sample_20steps_sin_CBF_20220318-004220.npy')
 # plot_sample_single('robust_CBF/data_plot/B500sample_20steps_sin_CBF_20220324-032131.npy')
