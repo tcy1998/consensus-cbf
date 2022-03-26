@@ -199,12 +199,12 @@ def multi_table():
     A2, B2 = table_data('robust_CBF/data_plot/A500sample_20steps_sin_MPPI_20220325-211237.csv')
     A3, B3 = table_data('robust_CBF/data_plot/A500sample_20steps_sin_MPPI_20220325-211322.csv')
     A4, B4 = table_data('robust_CBF/data_plot/A500sample_20steps_sin_MPPI_20220325-211350.csv')
-    A5, B5 = table_data('')
-    A6, B6 = table_data('')
-    A7, B7 = table_data('')
-    A8, B8 = table_data('')
-    A9, B9 = table_data('')
-    A10, B10 = table_data('')
+    A5, B5 = table_data('robust_CBF/data_plot/A500sample_20steps_sin_MPPI_20220325-211545.csv')
+    A6, B6 = table_data('robust_CBF/data_plot/A500sample_20steps_sin_MPPI_20220325-211609.csv')
+    A7, B7 = table_data('robust_CBF/data_plot/A500sample_20steps_sin_MPPI_20220325-211627.csv')
+    A8, B8 = table_data('robust_CBF/data_plot/C500sample_20steps_sin_MPPI_20220325-211649.csv')
+    A9, B9 = table_data('robust_CBF/data_plot/C500sample_20steps_sin_MPPI_20220325-211703.csv')
+    A10, B10 = table_data('robust_CBF/data_plot/C500sample_20steps_sin_MPPI_20220325-211718.csv')
     A = (A1+A2+A3+A4+A5+A6+A7+A8+A9+A10)/10
     B = (B1+B2+B3+B4+B5+B6+B7+B8+B9+B10)/10
     print(A, B)
