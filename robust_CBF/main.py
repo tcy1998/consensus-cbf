@@ -177,7 +177,7 @@ if __name__ == "__main__":
     v_s, w_s = [], []
     Sample = []
 
-    Use_CBF = True
+    Use_CBF = False
     Collect_sample = True
 
 
