@@ -195,6 +195,20 @@ def multi_table():
     D = (D1+D2+D3+D4+D5+D6+D7+D8+D9+D10)/10
     print(C,D)
 
+    A1, B1 = table_data('robust_CBF/data_plot/A500sample_20steps_sin_MPPI_20220325-210743.csv')
+    A2, B2 = table_data('')
+    A3, B3 = table_data('')
+    A4, B4 = table_data('')
+    A5, B5 = table_data('')
+    A6, B6 = table_data('')
+    A7, B7 = table_data('')
+    A8, B8 = table_data('')
+    A9, B9 = table_data('')
+    A10, B10 = table_data('')
+    A = (A1+A2+A3+A4+A5+A6+A7+A8+A9+A10)/10
+    B = (B1+B2+B3+B4+B5+B6+B7+B8+B9+B10)/10
+    print(A, B)
+
 # plot_sample('robust_CBF/data_plot/B200sample_20steps_sin_MPPI_20220317-172405.npy')
 # plot_sample('robust_CBF/data_plot/B200sample_20steps_sin_CBF_20220318-004220.npy')
 # plot_sample('robust_CBF/data_plot/B200sample_20steps_sin_CBF_20220320-002409.npy')
