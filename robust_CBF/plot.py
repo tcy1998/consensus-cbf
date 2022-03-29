@@ -16,39 +16,52 @@ def sin_plot(dataname, label_name):
     trajectories = loadtxt(dataname, delimiter=',')
     plt.plot(trajectories[0], trajectories[1], label=label_name)
 
-def multi_sin_plot():
-    sin_plot('robust_CBF/data_plot/A200sample_20steps_sin_CBF_20220320-002409.csv', '200 samples MPPI-CBF')
-    sin_plot('robust_CBF/data_plot/A500sample_20steps_sin_CBF_20220320-090119.csv','500 samples MPPI-CBF')
-    # sin_plot('robust_CBF/data_plot/A400sample_20steps_sin_CBF_20220320-090135.csv', '400 samples MPPI-CBF')
-    # sin_plot('robust_CBF/data_plot/A300sample_20steps_sin_CBF_20220320-142155.csv', '300 samples MPPI-CBF')
-   
+def sin_plot_dot(dataname, label_name):
+    trajectories = loadtxt(dataname, delimiter=',')
+    plt.plot(trajectories[0], trajectories[1], label=label_name, linestyle='--')
 
-    sin_plot('robust_CBF/data_plot/A500sample_20steps_sin_MPPI_20220320-144139.csv', '500 samples MPPI')
-    sin_plot('robust_CBF/data_plot/A1000sample_20steps_sin_MPPI_20220320-144201.csv', '1000 samples MPPI')
-    # sin_plot('robust_CBF/data_plot/A4000sample_20steps_sin_MPPI_20220320-144230.csv', '4000 samples MPPI')
-    x = np.arange(0,4,0.01)
+def multi_sin_plot():
+   
+    sin_plot('robust_CBF/data_plot/A500sample_20steps_sin_CBF_20220320-090119.csv','500-sample MPPI-CBF')
+    sin_plot('robust_CBF/data_plot/A400sample_20steps_sin_CBF_20220320-090135.csv', '400-sample MPPI-CBF')
+    sin_plot('robust_CBF/data_plot/A300sample_20steps_sin_CBF_20220320-142155.csv', '300-sample MPPI-CBF')
+    sin_plot('robust_CBF/data_plot/A200sample_20steps_sin_CBF_20220320-002409.csv', '200-sample MPPI-CBF')
+   
+    sin_plot_dot('robust_CBF/data_plot/A5000sample_20steps_sin_MPPI_20220320-144304.csv', '5000-sample MPPI')
+    sin_plot_dot('robust_CBF/data_plot/A4000sample_20steps_sin_MPPI_20220320-144230.csv', '4000-sample MPPI')
+    sin_plot_dot('robust_CBF/data_plot/A1000sample_20steps_sin_MPPI_20220320-144201.csv', '1000-sample MPPI')
+    sin_plot_dot('robust_CBF/data_plot/A500sample_20steps_sin_MPPI_20220320-144139.csv', '500-sample MPPI')
+    
+   
+    x = np.arange(0,4.2,0.01)
     y = np.sin(0.5 * np.pi * x)
-    plt.plot(x, y, color='r')
-    plt.plot(x, y+1, color='r')
+    plt.plot(x, y, color='k', linewidth=1.2)
+    plt.plot(x, y+1, color='k', linewidth=1.2)
+    plt.fill_between(x,5, y+1, color='whitesmoke')
+    plt.fill_between(x,y, -1.5, color='whitesmoke')
 
     ax = plt.gca()
     ax.set_xlabel('x-position')
     ax.set_ylabel('y-position')
-    target_circle = plt.Circle((dynamic.target_pos_x, dynamic.target_pos_y), 0.15, color='b', fill=False)
-    target_circle_1 = plt.Circle((dynamic.target_pos_x, dynamic.target_pos_y), 0.1, color='b', fill=False)
+    plt.xlim((0,4.2))
+    plt.ylim((-1.2, 3))
+    target_circle = plt.Circle((dynamic.target_pos_x, dynamic.target_pos_y), 0.125, color='b', fill=False)
+    target_circle_1 = plt.Circle((dynamic.target_pos_x, dynamic.target_pos_y), 0.075, color='b', fill=False)
     ax.add_artist(target_circle)
     ax.add_artist(target_circle_1)
-    plt.plot([dynamic.target_pos_x], [dynamic.target_pos_y], '+', color='b', markersize=50)
+    plt.plot([dynamic.target_pos_x], [dynamic.target_pos_y], '+', color='b', markersize=30)
+    plt.title('Trajecotry of unicycle model')
    
     
-    ax.grid(True)
-    ax.set_aspect(1)
+    # ax.grid(True)
+    ax.set_aspect(0.9)
 
     ax.set_xlabel
 
-    legend = ax.legend(loc='lower left', shadow=True, fontsize='medium')
+    plt.legend(loc='best', shadow=False, fontsize='small', edgecolor='whitesmoke', facecolor='whitesmoke', ncol=2)
+    # plt.legend(bbox_to_anchor=(1.04,0), loc="lower left", borderaxespad=0)
     timestr = time.strftime("%Y%m%d-%H%M%S")
-    # plt.savefig('robust_CBF/data_plot/multi_sin_{}.eps'.format(timestr), format='eps')
+    plt.savefig('robust_CBF/data_plot/multi_sin_{}.eps'.format(timestr), format='eps')
    
 
     plt.show()  
@@ -65,14 +78,16 @@ def plot_sample(dataname):
         
     x = np.arange(0,4,0.01)
     y = np.sin(0.5 * np.pi * x)
-    plt.plot(x, y, color='r', label='obstacles')
-    plt.plot(x, y+1, color='r')
+    plt.plot(x, y, color='darkorange', label='obstacles')
+    plt.plot(x, y+1, color='darkorange')
     plt.plot(0,0, color='deepskyblue', label='samples')
     ax = plt.gca()
     ax.grid(True)
     ax.set_xlabel('x-position')
     ax.set_ylabel('y-position')
     plt.legend(loc="upper right")
+    timestr = time.strftime("%Y%m%d-%H%M%S")
+    plt.savefig('robust_CBF/data_plot/multi_sample_{}.eps'.format(timestr), format='eps')
     plt.show()
 
 def plot_sample_single(dataname):
@@ -107,13 +122,15 @@ def calculate_cost(data, data_name):
     # print(costs)
 
 def multi_cost():
-    calculate_cost('robust_CBF/data_plot/A500sample_20steps_sin_CBF_20220320-090119.csv','500 samples MPPI-CBF')
-    calculate_cost('robust_CBF/data_plot/A400sample_20steps_sin_CBF_20220320-090135.csv', '400 samples MPPI-CBF')
-    calculate_cost('robust_CBF/data_plot/A300sample_20steps_sin_CBF_20220320-142155.csv', '300 samples MPPI-CBF')
-    calculate_cost('robust_CBF/data_plot/A200sample_20steps_sin_CBF_20220320-002409.csv', '200 samples MPPI-CBF')
-    calculate_cost('robust_CBF/data_plot/A4000sample_20steps_sin_MPPI_20220320-144230.csv', '4000 samples MPPI')
-    calculate_cost('robust_CBF/data_plot/A1000sample_20steps_sin_MPPI_20220320-144201.csv', '1000 samples MPPI')
-    calculate_cost('robust_CBF/data_plot/A500sample_20steps_sin_MPPI_20220320-144139.csv', '500 samples MPPI')
+    calculate_cost('robust_CBF/data_plot/A500sample_20steps_sin_CBF_20220320-090119.csv','500-sample MPPI-CBF')
+    calculate_cost('robust_CBF/data_plot/A400sample_20steps_sin_CBF_20220320-090135.csv', '400-samples MPPI-CBF')
+    calculate_cost('robust_CBF/data_plot/A300sample_20steps_sin_CBF_20220320-142155.csv', '300-samples MPPI-CBF')
+    calculate_cost('robust_CBF/data_plot/A200sample_20steps_sin_CBF_20220320-002409.csv', '200-samples MPPI-CBF')
+
+    calculate_cost('robust_CBF/data_plot/A5000sample_20steps_sin_MPPI_20220320-144304.csv', '5000-samples MPPI')
+    calculate_cost('robust_CBF/data_plot/A4000sample_20steps_sin_MPPI_20220320-144230.csv', '4000-samples MPPI')
+    calculate_cost('robust_CBF/data_plot/A1000sample_20steps_sin_MPPI_20220320-144201.csv', '1000-samples MPPI')
+    calculate_cost('robust_CBF/data_plot/A500sample_20steps_sin_MPPI_20220320-144139.csv', '500-samples MPPI')
     
     ax = plt.gca()
     ax.grid(True)
@@ -125,13 +142,25 @@ def multi_cost():
     plt.savefig('robust_CBF/data_plot/multi_cost_{}.eps'.format(timestr), format='eps')
     plt.show()
 
+def variance(data):
+     # Number of observations
+     n = len(data)
+     # Mean of the data
+     mean = sum(data) / n
+     # Square deviations
+     deviations = [(x - mean) ** 2 for x in data]
+     # Variance
+     variance = sum(deviations) / n
+     return variance
+
 def check_control(data, data_name):
     control = loadtxt(data, delimiter=',')
     time_stpes = len(control.T)
-    print(time_stpes)
+    # print(time_stpes)
     t = np.linspace(0, time_stpes*dynamic.dt, num=time_stpes)
     plt.plot(t, control[1], label=data_name)
-    plt.plot(t, control[0])
+    plt.plot(t, control[2])
+    print(variance(control[1]))
     plt.show()
 
 def table_data(data):
@@ -202,9 +231,9 @@ def multi_table():
     A5, B5 = table_data('robust_CBF/data_plot/A500sample_20steps_sin_MPPI_20220325-211545.csv')
     A6, B6 = table_data('robust_CBF/data_plot/A500sample_20steps_sin_MPPI_20220325-211609.csv')
     A7, B7 = table_data('robust_CBF/data_plot/A500sample_20steps_sin_MPPI_20220325-211627.csv')
-    A8, B8 = table_data('robust_CBF/data_plot/C500sample_20steps_sin_MPPI_20220325-211649.csv')
+    A8, B8 = table_data('robust_CBF/data_plot/C500sample_20steps_sin_MPPI_20220325-211809.csv')
     A9, B9 = table_data('robust_CBF/data_plot/C500sample_20steps_sin_MPPI_20220325-211703.csv')
-    A10, B10 = table_data('robust_CBF/data_plot/C500sample_20steps_sin_MPPI_20220325-211718.csv')
+    A10, B10 = table_data('robust_CBF/data_plot/C500sample_20steps_sin_MPPI_20220325-211814.csv')
     A = (A1+A2+A3+A4+A5+A6+A7+A8+A9+A10)/10
     B = (B1+B2+B3+B4+B5+B6+B7+B8+B9+B10)/10
     print(A, B)
@@ -216,7 +245,11 @@ def multi_table():
 # multi_cost()
 # check_control('robust_CBF/data_plot/C500sample_20steps_sin_CBF_20220324-032131.csv', 'control_MPPI_CBF_500_sample')
 # check_control('robust_CBF/data_plot/C500sample_20steps_sin_CBF_20220323-210943.csv', 'control_MPPI_CBF_500_sample')
-# check_control('robust_CBF/data_plot/C200sample_20steps_sin_MPPI_20220324-235015.csv', 'control_MPPI_200_sample')
+check_control('robust_CBF/data_plot/C200sample_20steps_sin_MPPI_20220324-235015.csv', 'control_MPPI_200_sample')
 # plot_sample_single('robust_CBF/data_plot/B200sample_20steps_sin_CBF_20220318-004220.npy')
 # plot_sample_single('robust_CBF/data_plot/B500sample_20steps_sin_CBF_20220324-032131.npy')
-multi_table()
+# multi_table()
+
+
+
+

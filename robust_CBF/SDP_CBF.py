@@ -52,6 +52,7 @@ class SDP_CBF:
 
     def SDP(self, X, U):
         U_delta = []        #return the Control input size (m,K)
+        # Var = np.zeros(self.m)
 
         # start_time = time.time()
         if self.obstacle_type == 'circle':
@@ -95,6 +96,7 @@ class SDP_CBF:
                 var = v.value
                 delta_u = np.random.multivariate_normal(mu.T, var)
                 U_delta.append(delta_u)
+                # Var += var
 
 
         # print("--- %s seconds ---" % (time.time() - start_time))

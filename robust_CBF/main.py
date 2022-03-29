@@ -87,7 +87,7 @@ class MPPI_control:
         X_np = state_sample.data.numpy()
 
 
-        return U_np, X_np
+        return U_np, X_np, S_K
 
     def cbf_control(self,x):
         self.x = x.view(self.d)
@@ -99,6 +99,7 @@ class MPPI_control:
         u_Tm = self.u_ts                                # Size (T, m)
         x_K = x_init_dK                                 # Size (d, K)
         state_sample = torch.Tensor(np.zeros((self.T, self.d, self.K)))
+        # Var, Cost = [], []
 
         for t in range(self.T):
             u_t = u_Tm[t]
@@ -117,8 +118,10 @@ class MPPI_control:
             S_K = S_K + C_K + self.Lambda*torch.mm(torch.mm(u_t.view(1, self.m), self.sigma),eps_mK)
 
             x_K = x_K_next
+            # Var.append(var)
         
         S_K += self.mdl.terminal_f(x_K, u_K)
+        
 
         # Step 2. Calculate weights
         rho = torch.min(S_K)
@@ -139,7 +142,7 @@ class MPPI_control:
         # X_np = X.data.numpy()
         X_np = state_sample.data.numpy()
 
-        return U_np, X_np
+        return U_np, X_np, S_K
 
     def plot(self, state_x, state_y):
         if self.mdl.obstacle_type == 'circle':
@@ -176,23 +179,24 @@ if __name__ == "__main__":
     x_s, y_s, z_s = [], [], []
     v_s, w_s = [], []
     Sample = []
+    S_cost = []
 
-    Use_CBF = False
+    Use_CBF = True
     Collect_sample = True
 
 
     for t in range(time_steps):
         if Use_CBF == True:        
-            U_np, X_np = mppi.cbf_control(obs)
+            U_np, X_np, S_K = mppi.cbf_control(obs)
         else:
-            U_np, X_np = mppi.mppi_control(obs)
+            U_np, X_np, S_K = mppi.mppi_control(obs)
 
         if Collect_sample == True:
             Sample.append(X_np)
 
         [x, y, z] = obs
         dist =(plant.target_pos_x - x)**2 + (plant.target_pos_y - y)**2
-        if dist < 0.15**2: 
+        if dist < 0.25**2: 
             print(dist, x, y, t)
             break
 
@@ -208,6 +212,8 @@ if __name__ == "__main__":
         z_s.append(z)
         v_s.append(u[0])
         w_s.append(u[1])
+        S_cost.append(S_K)
+        print(S_K)
 
     mppi.plot(x_s, y_s)
     
@@ -222,11 +228,14 @@ if __name__ == "__main__":
 
     timestr = time.strftime("%Y%m%d-%H%M%S")
     print(np.shape(Sample))
+    print(np.shape(S_cost))
     if Use_CBF == True:
         savetxt('robust_CBF/data_plot/A{}sample_{}steps_{}_CBF_{}.csv'.format(plant.K,plant.T,plant.obstacle_type,timestr), [x_s, y_s], delimiter=',')
         savetxt('robust_CBF/data_plot/C{}sample_{}steps_{}_CBF_{}.csv'.format(plant.K,plant.T,plant.obstacle_type,timestr), [z_s, v_s, w_s], delimiter=',')
         np.save('robust_CBF/data_plot/B{}sample_{}steps_{}_CBF_{}'.format(plant.K,plant.T,plant.obstacle_type,timestr), Sample)
+        np.save('robust_CBF/data_plot/B{}sample_{}steps_{}_CBF_{}'.format(plant.K,plant.T,plant.obstacle_type,timestr), S_cost)
     else:
         savetxt('robust_CBF/data_plot/A{}sample_{}steps_{}_MPPI_{}.csv'.format(plant.K,plant.T,plant.obstacle_type,timestr), [x_s, y_s], delimiter=',')
         savetxt('robust_CBF/data_plot/C{}sample_{}steps_{}_MPPI_{}.csv'.format(plant.K,plant.T,plant.obstacle_type,timestr), [z_s, v_s, w_s], delimiter=',')
         np.save('robust_CBF/data_plot/B{}sample_{}steps_{}_MPPI_{}'.format(plant.K,plant.T,plant.obstacle_type,timestr), Sample)
+        np.save('robust_CBF/data_plot/D{}sample_{}steps_{}_MPPI_{}'.format(plant.K,plant.T,plant.obstacle_type,timestr), S_cost)
