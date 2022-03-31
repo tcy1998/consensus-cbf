@@ -5,6 +5,7 @@ from numpy import loadtxt
 from Unicycle_dynamic import Unicycle_dynamic
 import time
 import pylab
+import torch
 
 cwd = os.getcwd()
 # Print the current working directory
@@ -22,10 +23,10 @@ def sin_plot_dot(dataname, label_name):
 
 def multi_sin_plot():
    
-    sin_plot('robust_CBF/data_plot/A500sample_20steps_sin_CBF_20220320-090119.csv','500-sample MPPI-CBF')
-    sin_plot('robust_CBF/data_plot/A400sample_20steps_sin_CBF_20220320-090135.csv', '400-sample MPPI-CBF')
-    sin_plot('robust_CBF/data_plot/A300sample_20steps_sin_CBF_20220320-142155.csv', '300-sample MPPI-CBF')
-    sin_plot('robust_CBF/data_plot/A200sample_20steps_sin_CBF_20220320-002409.csv', '200-sample MPPI-CBF')
+    sin_plot('robust_CBF/data_plot/A500sample_20steps_sin_CBF_20220320-090119.csv','500-sample SCBF-MPPI')
+    sin_plot('robust_CBF/data_plot/A400sample_20steps_sin_CBF_20220320-090135.csv', '400-sample SCBF-MPPI')
+    sin_plot('robust_CBF/data_plot/A300sample_20steps_sin_CBF_20220320-142155.csv', '300-sample SCBF-MPPI')
+    sin_plot('robust_CBF/data_plot/A200sample_20steps_sin_CBF_20220320-002409.csv', '200-sample SCBF-MPPI')
    
     sin_plot_dot('robust_CBF/data_plot/A5000sample_20steps_sin_MPPI_20220320-144304.csv', '5000-sample MPPI')
     sin_plot_dot('robust_CBF/data_plot/A4000sample_20steps_sin_MPPI_20220320-144230.csv', '4000-sample MPPI')
@@ -76,15 +77,19 @@ def plot_sample(dataname):
             trajectory = sample[j]
             plt.plot(trajectory[0], trajectory[1], color='deepskyblue', linewidth=0.05)
         
-    x = np.arange(0,4,0.01)
+    x = np.arange(-1,4.5,0.01)
     y = np.sin(0.5 * np.pi * x)
-    plt.plot(x, y, color='darkorange', label='obstacles')
-    plt.plot(x, y+1, color='darkorange')
+    plt.plot(x, y, color='k', label='obstacles')
+    plt.plot(x, y+1, color='k')
     plt.plot(0,0, color='deepskyblue', label='samples')
+    plt.fill_between(x,5, y+1, color='whitesmoke')
+    plt.fill_between(x,y, -1.5, color='whitesmoke')
     ax = plt.gca()
     ax.grid(True)
     ax.set_xlabel('x-position')
     ax.set_ylabel('y-position')
+    plt.xlim((-1,4.5))
+    plt.ylim((-1.2, 2.2))
     plt.legend(loc="upper right")
     timestr = time.strftime("%Y%m%d-%H%M%S")
     plt.savefig('robust_CBF/data_plot/multi_sample_{}.eps'.format(timestr), format='eps')
@@ -122,10 +127,10 @@ def calculate_cost(data, data_name):
     # print(costs)
 
 def multi_cost():
-    calculate_cost('robust_CBF/data_plot/A500sample_20steps_sin_CBF_20220320-090119.csv','500-sample MPPI-CBF')
-    calculate_cost('robust_CBF/data_plot/A400sample_20steps_sin_CBF_20220320-090135.csv', '400-samples MPPI-CBF')
-    calculate_cost('robust_CBF/data_plot/A300sample_20steps_sin_CBF_20220320-142155.csv', '300-samples MPPI-CBF')
-    calculate_cost('robust_CBF/data_plot/A200sample_20steps_sin_CBF_20220320-002409.csv', '200-samples MPPI-CBF')
+    calculate_cost('robust_CBF/data_plot/A500sample_20steps_sin_CBF_20220320-090119.csv','500-sample SCBF-MPPI')
+    calculate_cost('robust_CBF/data_plot/A400sample_20steps_sin_CBF_20220320-090135.csv', '400-samples SCBF-MPPI')
+    calculate_cost('robust_CBF/data_plot/A300sample_20steps_sin_CBF_20220320-142155.csv', '300-samples SCBF-MPPI')
+    calculate_cost('robust_CBF/data_plot/A200sample_20steps_sin_CBF_20220320-002409.csv', '200-samples SCBF-MPPI')
 
     calculate_cost('robust_CBF/data_plot/A5000sample_20steps_sin_MPPI_20220320-144304.csv', '5000-samples MPPI')
     calculate_cost('robust_CBF/data_plot/A4000sample_20steps_sin_MPPI_20220320-144230.csv', '4000-samples MPPI')
@@ -238,17 +243,43 @@ def multi_table():
     B = (B1+B2+B3+B4+B5+B6+B7+B8+B9+B10)/10
     print(A, B)
 
+
+def calculate_N(dataname):
+    epsilon_1, rho_1 = 0.05, 0.05
+    epsilon_2, rho_2 = 0.1, 0.1
+    loadedarray = np.load(dataname, allow_pickle=True)
+    print(np.shape(loadedarray), len(loadedarray))
+    E1, ES = [], []
+    for i in range(len(loadedarray)):
+        sample = loadedarray[i]
+        # print(sample)
+        E_1 = (torch.sum(torch.exp(-sample)))#/dynamic.K
+        print(0.1-E_1, i)
+        E_S = (torch.sum(sample))/dynamic.K
+        E1.append(E_1)
+        ES.append(E_S)
+        # print(E_S)
+
+    N_1 = -1/(epsilon_1**2) *(np.log(rho_1/2))
+    print(N_1)
+    N_2 = (4/(rho_2*epsilon_2**2)) * 100 # ((1/(E1[30] - epsilon_1))**2)
+    print(N_2)
+
+        
+# calculate_N('robust_CBF/data_plot/B500sample_20steps_sin_CBF_20220328-210401.npy')
+# calculate_N('robust_CBF/data_plot/D500sample_20steps_sin_MPPI_20220328-172240.npy')
 # plot_sample('robust_CBF/data_plot/B200sample_20steps_sin_MPPI_20220317-172405.npy')
 # plot_sample('robust_CBF/data_plot/B200sample_20steps_sin_CBF_20220318-004220.npy')
 # plot_sample('robust_CBF/data_plot/B200sample_20steps_sin_CBF_20220320-002409.npy')
-# multi_sin_plot()
-# multi_cost()
+multi_sin_plot()
+multi_cost()
 # check_control('robust_CBF/data_plot/C500sample_20steps_sin_CBF_20220324-032131.csv', 'control_MPPI_CBF_500_sample')
 # check_control('robust_CBF/data_plot/C500sample_20steps_sin_CBF_20220323-210943.csv', 'control_MPPI_CBF_500_sample')
-check_control('robust_CBF/data_plot/C200sample_20steps_sin_MPPI_20220324-235015.csv', 'control_MPPI_200_sample')
+# check_control('robust_CBF/data_plot/C200sample_20steps_sin_MPPI_20220324-235015.csv', 'control_MPPI_200_sample')
 # plot_sample_single('robust_CBF/data_plot/B200sample_20steps_sin_CBF_20220318-004220.npy')
 # plot_sample_single('robust_CBF/data_plot/B500sample_20steps_sin_CBF_20220324-032131.npy')
 # multi_table()
+
 
 
 

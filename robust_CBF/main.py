@@ -233,7 +233,7 @@ if __name__ == "__main__":
         savetxt('robust_CBF/data_plot/A{}sample_{}steps_{}_CBF_{}.csv'.format(plant.K,plant.T,plant.obstacle_type,timestr), [x_s, y_s], delimiter=',')
         savetxt('robust_CBF/data_plot/C{}sample_{}steps_{}_CBF_{}.csv'.format(plant.K,plant.T,plant.obstacle_type,timestr), [z_s, v_s, w_s], delimiter=',')
         np.save('robust_CBF/data_plot/B{}sample_{}steps_{}_CBF_{}'.format(plant.K,plant.T,plant.obstacle_type,timestr), Sample)
-        np.save('robust_CBF/data_plot/B{}sample_{}steps_{}_CBF_{}'.format(plant.K,plant.T,plant.obstacle_type,timestr), S_cost)
+        np.save('robust_CBF/data_plot/D{}sample_{}steps_{}_CBF_{}'.format(plant.K,plant.T,plant.obstacle_type,timestr), S_cost)
     else:
         savetxt('robust_CBF/data_plot/A{}sample_{}steps_{}_MPPI_{}.csv'.format(plant.K,plant.T,plant.obstacle_type,timestr), [x_s, y_s], delimiter=',')
         savetxt('robust_CBF/data_plot/C{}sample_{}steps_{}_MPPI_{}.csv'.format(plant.K,plant.T,plant.obstacle_type,timestr), [z_s, v_s, w_s], delimiter=',')
