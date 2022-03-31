@@ -6,6 +6,10 @@ from Unicycle_dynamic import Unicycle_dynamic
 import time
 import pylab
 import torch
+import matplotlib
+
+matplotlib.rcParams['pdf.fonttype'] = 42
+matplotlib.rcParams['ps.fonttype'] = 42
 
 cwd = os.getcwd()
 # Print the current working directory
@@ -62,6 +66,7 @@ def multi_sin_plot():
     plt.legend(loc='best', shadow=False, fontsize='small', edgecolor='whitesmoke', facecolor='whitesmoke', ncol=2)
     # plt.legend(bbox_to_anchor=(1.04,0), loc="lower left", borderaxespad=0)
     timestr = time.strftime("%Y%m%d-%H%M%S")
+    plt.rcParams['pdf.fonttype'] = 42
     plt.savefig('robust_CBF/data_plot/multi_sin_{}.eps'.format(timestr), format='eps')
    
 
@@ -91,6 +96,7 @@ def plot_sample(dataname):
     plt.xlim((-1,4.5))
     plt.ylim((-1.2, 2.2))
     plt.legend(loc="upper right")
+    plt.rcParams['pdf.fonttype'] = 42
     timestr = time.strftime("%Y%m%d-%H%M%S")
     plt.savefig('robust_CBF/data_plot/multi_sample_{}.eps'.format(timestr), format='eps')
     plt.show()
@@ -142,7 +148,7 @@ def multi_cost():
     legend = ax.legend(loc='upper right', shadow=True, fontsize='medium')
     ax.set_xlabel('Time Horizon')
     ax.set_ylabel('Costs')
-   
+    plt.rcParams['pdf.fonttype'] = 42    
     timestr = time.strftime("%Y%m%d-%H%M%S")
     plt.savefig('robust_CBF/data_plot/multi_cost_{}.eps'.format(timestr), format='eps')
     plt.show()
