@@ -181,8 +181,8 @@ if __name__ == "__main__":
     Sample = []
     S_cost = []
 
-    Use_CBF = True
-    Collect_sample = True
+    Use_CBF = False
+    Collect_sample = False
 
 
     for t in range(time_steps):
@@ -229,13 +229,15 @@ if __name__ == "__main__":
     timestr = time.strftime("%Y%m%d-%H%M%S")
     print(np.shape(Sample))
     print(np.shape(S_cost))
-    if Use_CBF == True:
-        savetxt('robust_CBF/data_plot/A{}sample_{}steps_{}_CBF_{}.csv'.format(plant.K,plant.T,plant.obstacle_type,timestr), [x_s, y_s], delimiter=',')
-        savetxt('robust_CBF/data_plot/C{}sample_{}steps_{}_CBF_{}.csv'.format(plant.K,plant.T,plant.obstacle_type,timestr), [z_s, v_s, w_s], delimiter=',')
-        np.save('robust_CBF/data_plot/B{}sample_{}steps_{}_CBF_{}'.format(plant.K,plant.T,plant.obstacle_type,timestr), Sample)
-        np.save('robust_CBF/data_plot/D{}sample_{}steps_{}_CBF_{}'.format(plant.K,plant.T,plant.obstacle_type,timestr), S_cost)
-    else:
-        savetxt('robust_CBF/data_plot/A{}sample_{}steps_{}_MPPI_{}.csv'.format(plant.K,plant.T,plant.obstacle_type,timestr), [x_s, y_s], delimiter=',')
-        savetxt('robust_CBF/data_plot/C{}sample_{}steps_{}_MPPI_{}.csv'.format(plant.K,plant.T,plant.obstacle_type,timestr), [z_s, v_s, w_s], delimiter=',')
-        np.save('robust_CBF/data_plot/B{}sample_{}steps_{}_MPPI_{}'.format(plant.K,plant.T,plant.obstacle_type,timestr), Sample)
-        np.save('robust_CBF/data_plot/D{}sample_{}steps_{}_MPPI_{}'.format(plant.K,plant.T,plant.obstacle_type,timestr), S_cost)
+
+    # Collect the data
+    # if Use_CBF == True:
+    #     savetxt('robust_CBF/data_plot/A{}sample_{}steps_{}_CBF_{}.csv'.format(plant.K,plant.T,plant.obstacle_type,timestr), [x_s, y_s], delimiter=',')
+    #     savetxt('robust_CBF/data_plot/C{}sample_{}steps_{}_CBF_{}.csv'.format(plant.K,plant.T,plant.obstacle_type,timestr), [z_s, v_s, w_s], delimiter=',')
+    #     np.save('robust_CBF/data_plot/B{}sample_{}steps_{}_CBF_{}'.format(plant.K,plant.T,plant.obstacle_type,timestr), Sample)
+    #     np.save('robust_CBF/data_plot/D{}sample_{}steps_{}_CBF_{}'.format(plant.K,plant.T,plant.obstacle_type,timestr), S_cost)
+    # else:
+    #     savetxt('robust_CBF/data_plot/A{}sample_{}steps_{}_MPPI_{}.csv'.format(plant.K,plant.T,plant.obstacle_type,timestr), [x_s, y_s], delimiter=',')
+    #     savetxt('robust_CBF/data_plot/C{}sample_{}steps_{}_MPPI_{}.csv'.format(plant.K,plant.T,plant.obstacle_type,timestr), [z_s, v_s, w_s], delimiter=',')
+    #     np.save('robust_CBF/data_plot/B{}sample_{}steps_{}_MPPI_{}'.format(plant.K,plant.T,plant.obstacle_type,timestr), Sample)
+    #     np.save('robust_CBF/data_plot/D{}sample_{}steps_{}_MPPI_{}'.format(plant.K,plant.T,plant.obstacle_type,timestr), S_cost)

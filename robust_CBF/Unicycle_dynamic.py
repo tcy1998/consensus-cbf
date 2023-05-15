@@ -7,11 +7,11 @@ class Unicycle_dynamic:
         self.dt = 0.02      # The frequency set to 50hz
         self.d = 3          # The imension of state
         self.m = 2          # The dimension of control input
-        self.K = 500        # The number of sample
+        self.K = 10000        # The number of sample
         self.T = 20         # The length of timestep
 
         self.mu = 0.0     # The mean of the noise 
-        self.sigma = 0.2  # The sigma function of the Brownian Motion
+        self.sigma = 1.0  # The sigma function of the Brownian Motion
         self.obstacle_type = 'sin'
         self.use_robust = False
 
@@ -42,7 +42,7 @@ class Unicycle_dynamic:
         w_d = U[1]
         # print(x_d.size(), U[0].size())
         X_d = torch.vstack((x_d, y_d, w_d))
-        X_new = X_d * self.dt + dW * self.sigma
+        X_new = X_d * self.dt #+ dW * self.sigma
 
         return X + X_new
 
