@@ -1,13 +1,14 @@
 from main import *
+from scipy.optimize import minimize
 
 class MPPI_control_naive:
 
     def __init__(self, init_u, init_x):
         self.mdl = Unicycle_dynamic()
-        self.d = self.mdl.d
-        self.m = self.mdl.m
-        self.K = self.mdl.K
-        self.T = self.mdl.T
+        self.d = self.mdl.d     # state dimension
+        self.m = self.mdl.m     # control dimension
+        self.K = self.mdl.K     # number of samples
+        self.T = self.mdl.T     # time horizon
         
         # 0. Initial control
         # self.u_ts = torch.Tensor(np.zeros((self.T, self.m)))
@@ -93,23 +94,55 @@ class MPPI_control_naive:
             input("<Hit Enter>")
             plt.close()
 
+
+
+class naive_MPC:
+    def __init__(self, init_u, init_x):
+        self.mdl = Unicycle_dynamic()
+        self.d = self.mdl.d
+        self.m = self.mdl.m
+        self.K = self.mdl.K
+        self.T = self.mdl.T
+        self.init_x = init_x
+        self.init_u = init_u
+
+    def solver(self, x_0, u_0):
+        x_opt = torch.tensor(np.zeros((self.T, self.d ,1)))
+        u_opt = torch.tensor(np.zeros((self.T, self.m)))
+
+        for i in range(self.T):
+            x_guess = x_opt[i-1] if i >0 else x_0
+            cost = lambda u: self.mdl.cost_f(x_guess, u)
+            bounds = [(u_0[0]-self.mdl.control_limit, u_0[0]+self.mdl.control_limit)]
+            res = minimize(cost, u_opt[i-1], bounds=bounds)
+            u_opt[i] = torch.tensor(res.x)
+            # print(x_0, self.mdl.dynamic(x_guess, u_opt[i]).reshape(self.d), x_opt[i], u_opt[i])
+            x_opt[i] = self.mdl.dynamic(x_guess, u_opt[i])
+        
+        return u_opt, x_opt
+
+
 if __name__ == "__main__":
 
-    init_u = np.array([4.0, 0.0])
-    init_x = np.array([0.0, 0.0, np.pi/4])
+    init_u = np.array([1.0, 0.0]).reshape(2,1)
+    init_x = torch.Tensor(np.array([[0.0],[0.5],[0]]))
 
     mppi = MPPI_control_naive(init_u, init_x)
+    mpc = naive_MPC(init_u, init_x)
     plant = Unicycle_Environment()
     safe_control = naive_CBF()
     time_steps = 250
 
 
     obs = plant.reset()
+    # obs = torch.Tensor(init_x)
+    print(obs)
 
     x_s, y_s, z_s = [], [], []
     v_s, w_s = [], []
     Sample = []
     S_cost = []
+    u = torch.Tensor(init_u)
 
     for t in range(time_steps):
         U_np, X_np, S_K = mppi.mppi_control(obs)
@@ -128,5 +161,22 @@ if __name__ == "__main__":
         v_s.append(u[0])
         w_s.append(u[1])
         S_cost.append(S_K)
+
+    # for t in range(time_steps):
+    #     U_np, X_np = mpc.solver(obs, u)
+    #     x, y, z = obs
+    #     dist =(plant.target_pos_x - x)**2 + (plant.target_pos_y - y)**2
+    #     if dist < 0.25**2:
+    #         print(dist, x, y, t)
+    #         break
+
+    #     u = torch.Tensor(U_np[0])
+    #     obs = plant.step(u)         #Update dynamics
+
+    #     x_s.append(x.data.numpy())
+    #     y_s.append(y.data.numpy())
+    #     z_s.append(z)
+    #     v_s.append(u[0])
+    #     w_s.append(u[1])
 
     mppi.plot(x_s, y_s)

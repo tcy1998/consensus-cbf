@@ -23,7 +23,7 @@ class Unicycle_dynamic:
 
         if self.obstacle_type == 'sin':
             self.target_pos_x, self.target_pos_y = 4.0, 0.5
-            self.control_limit = 100
+            self.control_limit = 20
             self.width = 1
 
     def dynamic(self, X, U):
@@ -84,7 +84,7 @@ class Unicycle_Environment(Unicycle_dynamic):
         return self.x
 
     def step(self, u):
-        u = torch.clamp(u, -self.control_limit, self.control_limit)
+        # u = torch.clamp(u, -self.control_limit, self.control_limit)
         x_next = self.dynamic(self.x, u)
         self.x = x_next
         return x_next
