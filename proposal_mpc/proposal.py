@@ -80,89 +80,89 @@ def solver_mpc(x_init, y_init, vx_init, vy_init):
     return sol.value(pos_x[1]), sol.value(pos_y[1]), sol.value(vel_x[1]), sol.value(vel_y[1])
 
 # ---- post-processing        ------
-# import matplotlib.pyplot as plt
-# x_0, y_0, vx_0, vy_0 = -3, 1, 1.0, -1.0
-# Epi = 500
-# x_log, y_log = [], [] 
-# for i in tqdm.tqdm(range(Epi)):
-#     try:
-#         x_0, y_0, vx_0, vy_0 = solver_mpc(x_0, y_0, vx_0, vy_0)
-#         x_log.append(x_0)
-#         y_log.append(y_0)
-#         if x_0 ** 2 + y_0 ** 2 < 0.01:
-#             break
-#     except RuntimeError:
-#         print('RuntimeError')
-#         break
+import matplotlib.pyplot as plt
+x_0, y_0, vx_0, vy_0 = -3, 1, 1.0, -1.0
+Epi = 500
+x_log, y_log = [], [] 
+for i in tqdm.tqdm(range(Epi)):
+    try:
+        x_0, y_0, vx_0, vy_0 = solver_mpc(x_0, y_0, vx_0, vy_0)
+        x_log.append(x_0)
+        y_log.append(y_0)
+        if x_0 ** 2 + y_0 ** 2 < 0.01:
+            break
+    except RuntimeError:
+        print('RuntimeError')
+        break
 
-# print(x_0, y_0)
+print(x_0, y_0)
 
-# plt.plot(x_log, y_log, 'r-')
-# plt.plot(0,0,'bo')
-# plt.xlabel('pos_x')
-# plt.ylabel('pos_y')
-# plt.axis([-4.0, 4.0, -4.0, 4.0])
+plt.plot(x_log, y_log, 'r-')
+plt.plot(0,0,'bo')
+plt.xlabel('pos_x')
+plt.ylabel('pos_y')
+plt.axis([-4.0, 4.0, -4.0, 4.0])
 
-# x = np.arange(-4,4,0.01)
-# y = np.sin(0.5 * pi * x) +1
-# plt.plot(x, y, 'g-', label='upper limit')
-# plt.plot(x, y-1.5, 'b-', label='lower limit')
-# plt.draw()
-# plt.pause(1)
-# input("<Hit Enter>")
-# plt.close()
+x = np.arange(-4,4,0.01)
+y = np.sin(0.5 * pi * x) +1
+plt.plot(x, y, 'g-', label='upper limit')
+plt.plot(x, y-1.5, 'b-', label='lower limit')
+plt.draw()
+plt.pause(1)
+input("<Hit Enter>")
+plt.close()
 
-# target_circle1 = plt.Circle((circle_obstacles_1['x'], circle_obstacles_1['y']), circle_obstacles_1['r'], color='b', fill=False)
-# target_circle2 = plt.Circle((circle_obstacles_2['x'], circle_obstacles_2['y']), circle_obstacles_2['r'], color='b', fill=False)
-# target_circle3 = plt.Circle((circle_obstacles_3['x'], circle_obstacles_3['y']), circle_obstacles_3['r'], color='b', fill=False)
-# plt.gcf().gca().add_artist(target_circle1)
-# plt.gcf().gca().add_artist(target_circle2)
-# plt.gcf().gca().add_artist(target_circle3)
-# x = np.arange(-4,4,0.01)
-# y = 1.5 + 0*x
-# plt.plot(x, y, 'g-', label='upper limit')
-# plt.plot(x, y-3, 'b-', label='lower limit')
-# plt.draw()
-# plt.pause(1)
-# input("<Hit Enter>")
-# plt.close()
+target_circle1 = plt.Circle((circle_obstacles_1['x'], circle_obstacles_1['y']), circle_obstacles_1['r'], color='b', fill=False)
+target_circle2 = plt.Circle((circle_obstacles_2['x'], circle_obstacles_2['y']), circle_obstacles_2['r'], color='b', fill=False)
+target_circle3 = plt.Circle((circle_obstacles_3['x'], circle_obstacles_3['y']), circle_obstacles_3['r'], color='b', fill=False)
+plt.gcf().gca().add_artist(target_circle1)
+plt.gcf().gca().add_artist(target_circle2)
+plt.gcf().gca().add_artist(target_circle3)
+x = np.arange(-4,4,0.01)
+y = 1.5 + 0*x
+plt.plot(x, y, 'g-', label='upper limit')
+plt.plot(x, y-3, 'b-', label='lower limit')
+plt.draw()
+plt.pause(1)
+input("<Hit Enter>")
+plt.close()
 
-# plt.show()
+plt.show()
 
-def MPC_diff_init(x_0, y_0, vx_0, vy_0):
-    Epis = 1000
-    vx_init = vx_0
-    vy_init = vy_0
-    x_log, y_log = [], []
-    for t in tqdm.tqdm(range(Epis)):
-        try:
-            x_0, y_0, vx_0, vy_0 = solver_mpc(x_0, y_0, vx_0, vy_0)
-            x_log.append(x_0)
-            y_log.append(y_0)
-            if x_0 ** 2 + y_0 ** 2 < 0.01:
-                return [1, vx_init, vy_init], x_log, y_log
-        except RuntimeError:
-            return [0, vx_init, vy_init], x_log, y_log
-    return [0, vx_init, vy_init], x_log, y_log
+# def MPC_diff_init(x_0, y_0, vx_0, vy_0):
+#     Epis = 1000
+#     vx_init = vx_0
+#     vy_init = vy_0
+#     x_log, y_log = [], []
+#     for t in tqdm.tqdm(range(Epis)):
+#         try:
+#             x_0, y_0, vx_0, vy_0 = solver_mpc(x_0, y_0, vx_0, vy_0)
+#             x_log.append(x_0)
+#             y_log.append(y_0)
+#             if x_0 ** 2 + y_0 ** 2 < 0.01:
+#                 return [1, vx_init, vy_init], x_log, y_log
+#         except RuntimeError:
+#             return [0, vx_init, vy_init], x_log, y_log
+#     return [0, vx_init, vy_init], x_log, y_log
 
-VX = np.arange(-2.5, 2.5, 0.1)
-VY = np.arange(-2.5, 2.5, 0.1)
-LOG_vel = []
-LOG_traj = []
-ii = 0
-for vx in VX:
-    for vy in VY:
-        print("epsidoe", ii)
-        Data_vel, Data_tarj_x, Data_tarj_y = MPC_diff_init(-3, 1, vx, vy)
-        LOG_vel.append(Data_vel)
-        LOG_traj.append([Data_tarj_x, Data_tarj_y])
-        ii += 1
+# VX = np.arange(-2.5, 2.5, 0.1)
+# VY = np.arange(-2.5, 2.5, 0.1)
+# LOG_vel = []
+# LOG_traj = []
+# ii = 0
+# for vx in VX:
+#     for vy in VY:
+#         print("epsidoe", ii)
+#         Data_vel, Data_tarj_x, Data_tarj_y = MPC_diff_init(-3, 1, vx, vy)
+#         LOG_vel.append(Data_vel)
+#         LOG_traj.append([Data_tarj_x, Data_tarj_y])
+#         ii += 1
 
-print(LOG_vel)
-import pickle
+# print(LOG_vel)
+# import pickle
 
-with open('LOG_vel_5.pkl', 'wb') as f:
-    pickle.dump(LOG_vel, f)
+# with open('LOG_vel_5.pkl', 'wb') as f:
+#     pickle.dump(LOG_vel, f)
 
-with open('LOG_traj_5.pkl', 'wb') as f:
-    pickle.dump(LOG_traj, f)
+# with open('LOG_traj_5.pkl', 'wb') as f:
+#     pickle.dump(LOG_traj, f)
