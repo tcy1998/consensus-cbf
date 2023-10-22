@@ -91,7 +91,7 @@ def cbf(u_norminal, u_old, agent1_position, agent2_position, agent3_position, d_
     partial_h_x2 = matrix([2*(x-agent3_position[0][0]), 2*(y-agent3_position[1][0]), 0], (1,3))
     h_x1 = (x-agent2_position[0][0])**2 + (y-agent2_position[1][0])**2 - d_s**2
     h_x2 = (x-agent3_position[0][0])**2 + (y-agent3_position[1][0])**2 - d_s**2
-    alpha = 10
+    alpha = 100
     uv_max,uv_min,uomega_max,uomega_min = 50.0,-10.0,50.0,-50.0
     lipschitz_constrain = 10
     upper_lipschitz_cons = lipschitz_constrain + u_old[0][0] - u_norminal[0][0]
@@ -106,14 +106,17 @@ def cbf(u_norminal, u_old, agent1_position, agent2_position, agent3_position, d_
     # G = -g
     # h = matrix([alpha * h_x]) + g * matrix(u_norminal)
 
-    h_1 = alpha * h_x1 ** 3 + g1 * matrix(u_norminal)
-    h_2 = alpha * h_x2 ** 3 + g2 * matrix(u_norminal)
-    # G = matrix([[-g[0],1.0,-1.0,0.0,0.0], [0.0,0.0,0.0,1.0,-1.0]])
-    # h = matrix([h_0[0][0],uv_max-u_norminal[0][0],-uv_min+u_norminal[0][0],uomega_max-u_norminal[1][0],-uomega_min+u_norminal[1][0]])
+    # h_1 = alpha * h_x1 ** 3 + g1 * matrix(u_norminal)
+    # h_2 = alpha * h_x2 ** 3 + g2 * matrix(u_norminal)
 
-    # G = matrix([[-g[0],1.0,-1.0,0.0,0.0,1.0,-1.0], [0.0,0.0,0.0,1.0,-1.0,0.0,0.0]])
-    # h = matrix([h_0[0][0],uv_max-u_norminal[0][0],-uv_min+u_norminal[0][0],uomega_max-u_norminal[1][0],-uomega_min+u_norminal[1][0],upper_lipschitz_cons,lower_lipschitz_cons])
+    # h_1 = alpha * h_x1 ** 1 + g1 * matrix(u_norminal)
+    # h_2 = alpha * h_x2 ** 1 + g2 * matrix(u_norminal)
 
+    h_1 = alpha * (np.exp(h_x1)/(1+np.exp(h_x1)) - 0.5) + g1 * matrix(u_norminal)
+    h_2 = alpha * (np.exp(h_x2)/(1+np.exp(h_x2)) - 0.5) + g2 * matrix(u_norminal)
+
+
+    
     G = matrix([[-g1[0],-g2[0],1.0,-1.0,0.0,0.0,1.0,-1.0], [0.0,0.0,0.0,0.0,1.0,-1.0,0.0,0.0]])
     h = matrix([h_1[0][0],h_2[0][0],uv_max-u_norminal[0][0],-uv_min+u_norminal[0][0],uomega_max-u_norminal[1][0],-uomega_min+u_norminal[1][0],upper_lipschitz_cons,lower_lipschitz_cons])
     solvers.options['show_progress'] = False
@@ -133,7 +136,7 @@ def main():
     d = np.array([[0.2],[-0.1]])
     P = np.array([[0.4,0.6],[0.4,0.6]])
     rho = 1
-    time_step = time_step_1 = 600
+    time_step = time_step_1 = 1000
     time_step_size = 0.002
     
     L_matrix = np.array([[2,-1,-1],[-1,2,-1],[-1,-1,2]])
@@ -182,10 +185,6 @@ def main():
             if i == 0:
                 virtual_target =  g_id_leader(x[i][0])
                 control_input = UN_controller(virtual_target, leader_true_x, error, desire_speed=15/time_step)
-                # if ((leader_true_x[0] - follower1_true_x[0]) ** 2 + (leader_true_x[1] - follower1_true_x[1]) ** 2 >= safe_distance**2) and ((leader_true_x[0] - follower2_true_x[0]) ** 2 + (leader_true_x[1] - follower2_true_x[1]) ** 2 >= safe_distance**2):
-                #     Use_cbf = False
-                # else:
-                #     Use_cbf = True
 
                 if Use_cbf == True:
                     control_input += cbf(control_input, u_leader_old, leader_true_x, follower1_true_x, follower2_true_x, d_s=safe_distance)
@@ -204,10 +203,6 @@ def main():
             if i == 1:
                 virtual_target_1 = g_id_follower1(x[i][0])
                 control_input_1 = UN_controller(virtual_target_1, follower1_true_x, follower1_error, desire_speed=10*np.pi/time_step)
-                # if ((leader_true_x[0] - follower1_true_x[0]) ** 2 + (leader_true_x[1] - follower1_true_x[1]) ** 2 >= safe_distance**2) and ((follower1_true_x[0] - follower2_true_x[0]) ** 2 + (follower1_true_x[1] - follower2_true_x[1]) ** 2 >= safe_distance**2):
-                #     Use_cbf = False
-                # else:
-                #     Use_cbf = True
                 if Use_cbf == True:
                     control_input_1 += cbf(control_input_1, u_follower1_old, follower1_true_x, leader_true_x, follower2_true_x, d_s=safe_distance)
                 follower1_true_x = dynamic(follower1_true_x, control_input_1, time_step_size, disturbance=0)
