@@ -203,7 +203,7 @@ class Unicycle_CBF_multi_agent_circle_targets():
         plt.show()
 
     def single_agent_main(self):
-        Init_state, Target_state = [-10.0, 0.0, -np.pi], [10.0, 0.0, -np.pi]
+        Init_state, Target_state = [-10.0, 0.0, -np.pi], [10.0, 3.0, -np.pi]
         Time_step = 1000
         State_log = [Init_state.copy()]
         State = Init_state.copy()
@@ -260,5 +260,5 @@ class Unicycle_CBF_multi_agent_circle_targets():
 
 if __name__ == '__main__':
     num_agents = 6
-    Unicycle_CBF_multi_agent_circle_targets(num_agents).main()              
-    # Unicycle_CBF_multi_agent_circle_targets(num_agents).single_agent_main()        
+    # Unicycle_CBF_multi_agent_circle_targets(num_agents).main()              
+    Unicycle_CBF_multi_agent_circle_targets(num_agents).single_agent_main()        

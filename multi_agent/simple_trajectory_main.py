@@ -112,8 +112,14 @@ def cbf(u_norminal, u_old, agent1_position, agent2_position, agent3_position, d_
     # h_1 = alpha * h_x1 ** 1 + g1 * matrix(u_norminal)
     # h_2 = alpha * h_x2 ** 1 + g2 * matrix(u_norminal)
 
-    h_1 = alpha * (np.exp(h_x1)/(1+np.exp(h_x1)) - 0.5) + g1 * matrix(u_norminal)
-    h_2 = alpha * (np.exp(h_x2)/(1+np.exp(h_x2)) - 0.5) + g2 * matrix(u_norminal)
+    # h_1 = alpha * (np.exp(h_x1)/(1+np.exp(h_x1)) - 0.5) + g1 * matrix(u_norminal)
+    # h_2 = alpha * (np.exp(h_x2)/(1+np.exp(h_x2)) - 0.5) + g2 * matrix(u_norminal)
+
+    # h_1 = alpha * (np.log(h_x1 + 1)) + g1 * matrix(u_norminal)
+    # h_2 = alpha * (np.log(h_x2 + 1)) + g2 * matrix(u_norminal)
+
+    h_1 = alpha * (np.tanh(h_x1)) + g1 * matrix(u_norminal)
+    h_2 = alpha * (np.tanh(h_x2)) + g2 * matrix(u_norminal)
 
 
     
